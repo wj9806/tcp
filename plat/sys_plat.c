@@ -128,7 +128,6 @@ void sys_plat_init(void) {
  // windows
 #elif defined(SYS_PLAT_WINDOWS)
 
-#include <winsock.h>
 #include <tchar.h>
 #include <time.h>
 #include "pcap.h"
@@ -253,7 +252,7 @@ void sys_mutex_unlock(sys_mutex_t locker) {
     ReleaseMutex(locker);
 }
 
-sys_thread_t sys_thread_create(void (*entry)(void * arg), void* arg) {
+sys_thread_t sys_thread_create(void (*entry)(void * arg), void * arg) {
     return CreateThread(
         NULL,                           // SD
         0,                              // initial stack size
@@ -604,12 +603,12 @@ int pcap_show_list(void) {
 }
 
 /**
- * 打开pcap设备接口
+ * open pcap dev interface
  */
 pcap_t * pcap_device_open(const char* ip, const uint8_t* mac_addr) {
-    // 加载pcap库
+    // load pcap lib
     if (load_pcap_lib() < 0) {
-        fprintf(stderr, "load pcap lib error。在windows上，请课程提供的安装npcap.dll\n");
+        fprintf(stderr, "load pcap lib error。please isntallnpcap.dll\n");
         return (pcap_t *)0;
     }
 

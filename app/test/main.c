@@ -1,8 +1,17 @@
 #include <stdio.h>
 #include "sys_plat.h"
+#include "echo/tcp_echo_client.h"
+#include "echo/tcp_echo_server.h"
+
+#define PORT       5000
+
+static int count = 0;
 
 int main()
 {
+    //tcp_echo_client_start(friend0_ip, PORT);
+    tcp_echo_server_start(PORT);
+
     pcap_t * pcap = pcap_device_open(netdev0_phy_ip, netdev0_hwaddr);
     while (pcap)
     {
@@ -34,6 +43,5 @@ int main()
         }
 
     }
-    system("pause");
     return 0;
 }
