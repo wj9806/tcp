@@ -2,6 +2,7 @@
 #include "sys_plat.h"
 #include "echo/tcp_echo_client.h"
 #include "echo/tcp_echo_server.h"
+#include "net.h"
 
 #define PORT       5000
 

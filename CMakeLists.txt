@@ -14,6 +14,7 @@ include_directories(
         ${PROJECT_SOURCE_DIR}/npcap/Include          # pcap path
         ${PROJECT_SOURCE_DIR}/app
         ${PROJECT_SOURCE_DIR}/plat
+        ${PROJECT_SOURCE_DIR}/net/net
 )
 
 file(GLOB_RECURSE SOURCE_LIST
@@ -21,6 +22,8 @@ file(GLOB_RECURSE SOURCE_LIST
         "app/*.h"
         "plat/*.c"
         "plat/*.h"
+        "net/*.h"
+        "net/*.c"
 )
 
 add_executable(${PROJECT_NAME} ${SOURCE_LIST})
