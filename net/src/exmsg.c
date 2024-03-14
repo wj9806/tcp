@@ -11,7 +11,7 @@ net_err_t exmsg_init(void)
 
 static void work_thread(void * arg)
 {
-    plat_printf("exmsg is running");
+    plat_printf("exmsg is running\n");
 
     while (1)
     {
