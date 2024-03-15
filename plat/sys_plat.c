@@ -223,7 +223,7 @@ void sys_sem_notify(sys_sem_t sem) {
 sys_mutex_t sys_mutex_create(void) {
     sys_mutex_t mutex = CreateMutex(NULL, FALSE, NULL); // 初始不被占用
     if (mutex == NULL) {
-        return SYS_MUTEx_INVALID;
+        return SYS_MUTEX_INVALID;
     }
     return mutex;
 }

@@ -77,7 +77,7 @@ typedef DWORD net_time_t;      // 时间类型
 
 #define SYS_THREAD_INVALID          (HANDLE)0
 #define SYS_SEM_INVALID             (HANDLE)0
-#define SYS_MUTEx_INVALID           (HANDLE)0
+#define SYS_MUTEX_INVALID           (HANDLE)0
 
 typedef HANDLE sys_mutex_t;         // 互斥锁
 typedef HANDLE sys_thread_t;        // 线程

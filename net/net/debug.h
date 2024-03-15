@@ -5,6 +5,8 @@
 #ifndef NET_DEBUG_H
 #define NET_DEBUG_H
 
+#include "net_cfg.h"
+
 #define EN_DEBUG
 
 #define DEBUG_STYLE_RED         "\033[31m"

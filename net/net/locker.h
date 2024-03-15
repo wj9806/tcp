@@ -8,12 +8,12 @@
 #include "sys_plat.h"
 #include "net_err.h"
 
-typedef enum _locker_type_t{
+typedef enum locker_type_t{
     LOCKER_NONE,
     LOCKER_THREAD,
 } locker_type_t;
 
-typedef struct _locker_t
+typedef struct locker_t
 {
     locker_type_t type;
     union {

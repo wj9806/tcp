@@ -3,6 +3,7 @@
 #include "netif_pcap.h"
 #include "debug.h"
 #include "list.h"
+#include "mblock.h"
 
 #define DEBUG_TEST    DEBUG_LEVEL_INFO
 
@@ -39,6 +40,26 @@ net_err_t net_dev_init()
 }
 
 
+void mblock_test() {
+    mblock_t block;
+    static uint8_t buffer[100][10];
+
+    //10 memory blocks, every block 100 size
+    mblock_init(&block, buffer, 100, 10, LOCKER_THREAD);
+    void * temp[10];
+    for (int i = 0; i < 10; ++i) {
+        temp[i] = mblock_alloc(&block, 10);
+        plat_printf("blcok: %p, free count: %d\n", temp[i], mblock_free_cnt(&block));
+    }
+
+    for (int i = 0; i < 10; ++i) {
+        mblock_free(&block, temp[i]);
+        plat_printf("free count: %d\n", mblock_free_cnt(&block));
+    }
+
+    mblock_destroy(&block);
+}
+
 int main()
 {
     debug_info(DEBUG_TEST, "hello");
@@ -47,6 +68,7 @@ int main()
 
     assert(3==3, "test assert");
     list_test();
+    mblock_test();
 
     net_init();
     net_start();
