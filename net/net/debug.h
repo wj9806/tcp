@@ -8,7 +8,6 @@
 #define EN_DEBUG
 
 #define DEBUG_STYLE_RED         "\033[31m"
-#define DEBUG_STYLE_GREEN       "\033[32m"
 #define DEBUG_STYLE_YELLOW      "\033[33m"
 #define DEBUG_STYLE_WHITE       "\033[0m"
 
