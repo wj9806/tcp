@@ -66,7 +66,7 @@ int main()
     debug_warn(DEBUG_TEST, "hello");
     debug_error(DEBUG_TEST, "hello");
 
-    assert(3==3, "test assert");
+    assert(3==3, "test assert")
     list_test();
     mblock_test();
 

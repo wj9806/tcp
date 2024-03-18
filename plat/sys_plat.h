@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <time.h>
+#include "net_err.h"
 
 // 系统硬件配置
 // 不同网卡配置，共2块网卡
