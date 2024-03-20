@@ -54,6 +54,11 @@ static inline node_t * list_last(list_t * list)
     return list->last;
 }
 
+static inline void list_node_set_next(node_t* pre, node_t* next) {
+    pre->next = next;
+    next->pre = pre;
+}
+
 void list_insert_first(list_t * list, node_t * node);
 
 void list_insert_last(list_t * list, node_t * node);

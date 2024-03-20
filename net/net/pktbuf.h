@@ -14,6 +14,7 @@
 typedef struct pktblk_t
 {
     node_t node;
+    //data size
     int size;
     //data addr
     uint8_t * data;
@@ -21,7 +22,7 @@ typedef struct pktblk_t
 } pktblk_t;
 
 
-typedef struct _pktbuf_t
+typedef struct pktbuf_t
 {
     int total_size;
     //data block list
@@ -31,5 +32,11 @@ typedef struct _pktbuf_t
 } pktbuf_t;
 
 net_err_t pktbuf_init(void);
+
+//alloc given size pktbuf_t
+pktbuf_t * pktbuf_alloc(int size);
+
+//free pktbuf_t
+void pktbuf_free(pktbuf_t * buf);
 
 #endif //NET_PKTBUF_H

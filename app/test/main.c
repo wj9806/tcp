@@ -4,6 +4,7 @@
 #include "debug.h"
 #include "list.h"
 #include "mblock.h"
+#include "pktbuf.h"
 
 #define DEBUG_TEST    DEBUG_LEVEL_INFO
 
@@ -60,7 +61,13 @@ void mblock_test() {
     mblock_destroy(&block);
 }
 
-int main()
+void pktbuf_test()
+{
+    pktbuf_t * buf = pktbuf_alloc(2000);
+    pktbuf_free(buf);
+}
+
+void test()
 {
     debug_info(DEBUG_TEST, "hello");
     debug_warn(DEBUG_TEST, "hello");
@@ -69,11 +76,16 @@ int main()
     assert(3==3, "test assert")
     list_test();
     mblock_test();
+    pktbuf_test();
+}
 
+int main()
+{
     net_init();
     net_start();
-
     net_dev_init();
+
+    test();
 
     for(;;)
     {
