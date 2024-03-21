@@ -144,7 +144,7 @@ pktbuf_t * pktbuf_alloc(int size)
     node_init(&buf->node);
 
     if(size) {
-        pktblk_t * block = pktblk_alloc_list(size, 0);
+        pktblk_t * block = pktblk_alloc_list(size, 1);
         if(!block) {
             //alloc failed
             mblock_free(&pktbuf_list, buf);
@@ -160,4 +160,41 @@ void pktbuf_free(pktbuf_t * buf)
 {
     pktblk_free_list(pktbuf_first_blk(buf));
     mblock_free(&pktbuf_list, buf);
+}
+
+
+net_err_t pktbuf_add_header(pktbuf_t * buf, int size, int cont)
+{
+    pktblk_t * block = pktbuf_first_blk(buf);
+    int resv_size = (int)(block->data - block->payload);
+    if(size <= resv_size)
+    {
+        block->size += size;
+        block->data -= size;
+        buf->total_size += size;
+        display_check_buf(buf);
+        return NET_ERR_OK;
+    }
+    if (cont)
+    {
+        if(size > PKTBUF_BLK_SIZE)
+        {
+            debug_error(DEBUG_PKTBUF, "set cont, size to big: %d > %d", size, PKTBUF_BLK_SIZE);
+            return NET_ERR_SIZE;
+        }
+        block = pktblk_alloc_list(size, 1);
+        if(!block)
+        {
+            debug_error(DEBUG_PKTBUF, "no buffer %d", size);
+            return NET_ERR_NONE;
+        }
+    }
+    else
+    {
+
+    }
+
+    pktbuf_insert_blk_list(buf, block, 0);
+    display_check_buf(buf);
+    return NET_ERR_OK;
 }

@@ -113,4 +113,11 @@ static void display_check_buf(pktbuf_t * buf)
 #define display_check_buf(buf)
 #endif
 
+/**
+ * @param buf buffer
+ * @param size header size
+ * @param cout Whether it is continuous
+ */
+net_err_t pktbuf_add_header(pktbuf_t * buf, int size, int cont);
+
 #endif //NET_PKTBUF_H
