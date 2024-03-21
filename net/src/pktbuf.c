@@ -80,12 +80,64 @@ static pktblk_t * pktblk_alloc_list(int size, int add_front)
     return first_block;
 }
 
+/**
+ * insert pktblk_t into pktbuf_t
+ * @param front if front equals 1, then insert into tail
+ */
+static void pktbuf_insert_blk_list(pktbuf_t * buf, pktblk_t * block, int last)
+{
+    if (last)
+    {
+        while (block)
+        {
+            pktblk_t * next_blk = pktblk_blk_next(block);
+            list_insert_last(&buf->blk_list, &block->node);
+            buf->total_size += block->size;
+            block = next_blk;
+        }
+    }
+    else
+    {
+        pktblk_t * pre = (pktblk_t *) 0;
+        while (block)
+        {
+            pktblk_t * next_blk = pktblk_blk_next(block);
+            if (pre) {
+                list_insert_after(&buf->blk_list, &pre->node, &block->node);
+            }
+            else
+            {
+                list_insert_first(&buf->blk_list, &block->node);
+            }
+            buf->total_size += block->size;
+            pre = block;
+            block = next_blk;
+        }
+    }
+
+}
+
 pktbuf_t * pktbuf_alloc(int size)
 {
-    //tail insert
-    pktblk_alloc_list(size, 0);
-    pktblk_alloc_list(size, 1);
-    return (pktbuf_t *)0;
+    pktbuf_t * buf = mblock_alloc(&pktbuf_list, -1);
+    if (!buf) {
+        debug_error(DEBUG_PKTBUF, "no buffer");
+        return (pktbuf_t *)0;
+    }
+    buf->total_size = 0;
+    list_init(&buf->blk_list);
+    node_init(&buf->node);
+
+    if(size) {
+        pktblk_t * block = pktblk_alloc_list(size, 0);
+        if(!block) {
+            //alloc failed
+            mblock_free(&pktbuf_list, buf);
+            return (pktbuf_t *)0;
+        }
+        pktbuf_insert_blk_list(buf, block, 1);
+    }
+    return buf;
 }
 
 void pktbuf_free(pktbuf_t * buf)

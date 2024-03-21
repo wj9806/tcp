@@ -39,4 +39,10 @@ pktbuf_t * pktbuf_alloc(int size);
 //free pktbuf_t
 void pktbuf_free(pktbuf_t * buf);
 
+static inline pktblk_t * pktblk_blk_next(pktblk_t * block)
+{
+    node_t * next = list_node_next(&block->node);
+    return list_node_parent(next, pktblk_t, node);
+}
+
 #endif //NET_PKTBUF_H

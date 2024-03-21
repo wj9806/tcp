@@ -18,8 +18,8 @@ typedef struct mblock_t
     list_t free_list;
     //the addr start of memory-block array
     void * start;
+    //mblock locker
     locker_t locker;
-
     //alloc memory-block sem
     sys_sem_t alloc_sem;
 } mblock_t;
