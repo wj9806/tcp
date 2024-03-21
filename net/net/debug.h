@@ -33,4 +33,6 @@ void debug_print(int module, int level, const char * file, const char * func, in
     }                       \
 }
 
+#define DEBUG_DISP_ENABLED(module) (module >= DEBUG_LEVEL_INFO)
+
 #endif //NET_DEBUG_H

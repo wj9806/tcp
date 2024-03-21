@@ -8,8 +8,10 @@
 #include "locker.h"
 
 static locker_t locker;
+
 static pktblk_t block_buffer[PKTBUF_BLK_CNT];
 static mblock_t block_list;
+
 static pktbuf_t pktbuf_buffer[PKTBUF_BUF_CNT];
 static mblock_t pktbuf_list;
 
@@ -32,6 +34,19 @@ static pktblk_t *pktblk_alloc() {
         node_init(&block->node);
     }
     return block;
+}
+
+/**
+ * free pktblk_t
+ */
+static void pktblk_free_list(pktblk_t * first)
+{
+    while (first)
+    {
+        pktblk_t * next = pktblk_blk_next(first);
+        mblock_free(&block_list, first);
+        first = next;
+    }
 }
 
 static pktblk_t * pktblk_alloc_list(int size, int add_front)
@@ -137,10 +152,12 @@ pktbuf_t * pktbuf_alloc(int size)
         }
         pktbuf_insert_blk_list(buf, block, 1);
     }
+    display_check_buf(buf);
     return buf;
 }
 
 void pktbuf_free(pktbuf_t * buf)
 {
-
+    pktblk_free_list(pktbuf_first_blk(buf));
+    mblock_free(&pktbuf_list, buf);
 }
