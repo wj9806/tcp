@@ -74,6 +74,15 @@ void pktbuf_test()
     for (int i = 0; i < 10; ++i) {
         pktbuf_remove_header(buf, 33);
     }
+
+    plat_printf("----------------------header add.\n");
+    for (int i = 0; i < 10; ++i) {
+        pktbuf_add_header(buf, 33, 0);
+    }
+
+    for (int i = 0; i < 10; ++i) {
+        pktbuf_remove_header(buf, 33);
+    }
 }
 
 void test()

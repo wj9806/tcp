@@ -196,7 +196,16 @@ net_err_t pktbuf_add_header(pktbuf_t * buf, int size, int cont)
     }
     else
     {
-
+        block->data = block->payload;
+        block->size += resv_size;
+        buf->total_size += resv_size;
+        size -= resv_size;
+        block = pktblk_alloc_list(size, 1);
+        if(!block)
+        {
+            debug_error(DEBUG_PKTBUF, "no buffer %d", size);
+            return NET_ERR_NONE;
+        }
     }
 
     pktbuf_insert_blk_list(buf, block, 0);
