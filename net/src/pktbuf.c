@@ -240,3 +240,91 @@ net_err_t pktbuf_remove_header(pktbuf_t * buf, int size)
     display_check_buf(buf);
     return NET_ERR_OK;
 }
+
+net_err_t pktbuf_resize(pktbuf_t * buf, int size)
+{
+    if (size == buf->total_size)
+    {
+        return NET_ERR_OK;
+    }
+
+    if(buf->total_size == 0)
+    {
+        //alloc size
+        pktblk_t * blk = pktblk_alloc_list(size, 0);
+        if(!blk)
+        {
+            debug_error(DEBUG_PKTBUF, "no buffer %d", size);
+            return NET_ERR_NONE;
+        }
+        pktbuf_insert_blk_list(buf, blk, 1);
+    }
+    else if (size == 0)
+    {
+        //free all blocks
+        pktblk_free_list(pktbuf_first_blk(buf));
+        buf->total_size = 0;
+        list_init(&buf->blk_list);
+    }
+    else if (size > buf->total_size)
+    {
+        pktblk_t * tail_blk = pktbuf_last_blk(buf);
+        // The required size of the growth
+        int inc_size = size - buf->total_size;
+        //tail block's remain size
+        int remain_size = curr_blk_tail_free(tail_blk);
+        if (remain_size >= inc_size)
+        {
+            tail_blk->size += inc_size;
+            buf->total_size += inc_size;
+        }
+        else
+        {
+            //alloc a new block
+            pktblk_t * new_blks = pktblk_alloc_list(inc_size - remain_size, 0);
+            if(!new_blks)
+            {
+                debug_error(DEBUG_PKTBUF, "no buffer %d", size);
+                return NET_ERR_NONE;
+            }
+            tail_blk->size += remain_size;
+            buf->total_size += remain_size;
+            pktbuf_insert_blk_list(buf, new_blks, 1);
+        }
+    }
+    else
+    {
+        //decrement the total_size
+        int total_size = 0;
+        pktblk_t * tail_blk;
+        for (tail_blk = pktbuf_first_blk(buf); tail_blk; tail_blk = pktblk_blk_next(tail_blk)) {
+            total_size += tail_blk->size;
+            if (total_size >= size)
+            {
+                break;
+            }
+        }
+        if (tail_blk == (pktblk_t *)0)
+        {
+            return NET_ERR_SIZE;
+        }
+
+        total_size = 0;
+        pktblk_t * curr_blk = pktblk_blk_next(tail_blk);
+        while (curr_blk)
+        {
+            pktblk_t * next = pktblk_blk_next(curr_blk);
+            total_size += curr_blk->size;
+
+            list_remove(&buf->blk_list, &curr_blk->node);
+            pktblk_free(curr_blk);
+            curr_blk = next;
+        }
+        //set tail block's size
+        tail_blk->size -= buf->total_size - total_size - size;
+        buf->total_size = size;
+    }
+
+    display_check_buf(buf);
+    return NET_ERR_OK;
+}

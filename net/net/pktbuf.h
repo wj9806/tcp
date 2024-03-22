@@ -66,6 +66,16 @@ static inline pktblk_t * pktbuf_first_blk(pktbuf_t * buf)
 }
 
 /**
+ * @param buf given pktbuf_t
+ * @return given pktbuf_t's last pktblk_t
+ */
+static inline pktblk_t * pktbuf_last_blk(pktbuf_t * buf)
+{
+    node_t * last = list_last(&buf->blk_list);
+    return list_node_parent(last, pktblk_t, node);
+}
+
+/**
  * debug structure of given pktbuf_t
  */
 #if DEBUG_DISP_ENABLED(DEBUG_PKTBUF)
@@ -124,5 +134,11 @@ net_err_t pktbuf_add_header(pktbuf_t * buf, int size, int cont);
  * remove the pktbuf's header
  */
 net_err_t pktbuf_remove_header(pktbuf_t * buf, int size);
+
+/**
+ * resize the pktbuf's size
+ * @param size desired size
+ */
+net_err_t pktbuf_resize(pktbuf_t * buf, int size);
 
 #endif //NET_PKTBUF_H
