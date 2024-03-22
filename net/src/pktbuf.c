@@ -328,3 +328,18 @@ net_err_t pktbuf_resize(pktbuf_t * buf, int size)
     display_check_buf(buf);
     return NET_ERR_OK;
 }
+
+net_err_t pktbuf_merge(pktbuf_t * dest, pktbuf_t * src)
+{
+    pktblk_t * first;
+
+    while ((first = pktbuf_first_blk(src)))
+    {
+        list_remove_first(&src->blk_list);
+        pktbuf_insert_blk_list(dest, first, 1);
+    }
+
+    pktbuf_free(src);
+    display_check_buf(dest);
+    return NET_ERR_OK;
+}

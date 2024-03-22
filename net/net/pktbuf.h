@@ -141,4 +141,11 @@ net_err_t pktbuf_remove_header(pktbuf_t * buf, int size);
  */
 net_err_t pktbuf_resize(pktbuf_t * buf, int size);
 
+/**
+ * merge src pktbuf_t into dest pktbuf_t
+ * @param dest dest pktbuf_t
+ * @param src src pktbuf_t
+ */
+net_err_t pktbuf_merge(pktbuf_t * dest, pktbuf_t * src);
+
 #endif //NET_PKTBUF_H
