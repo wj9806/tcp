@@ -120,4 +120,9 @@ static void display_check_buf(pktbuf_t * buf)
  */
 net_err_t pktbuf_add_header(pktbuf_t * buf, int size, int cont);
 
+/**
+ * remove the pktbuf's header
+ */
+net_err_t pktbuf_remove_header(pktbuf_t * buf, int size);
+
 #endif //NET_PKTBUF_H
