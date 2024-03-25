@@ -99,6 +99,19 @@ void pktbuf_test()
     pktbuf_t * sbuf = pktbuf_alloc(892);
     pktbuf_merge(buf, sbuf);
     pktbuf_free(buf);
+
+
+    buf = pktbuf_alloc(32);
+    pktbuf_merge(buf, pktbuf_alloc(4));
+    pktbuf_merge(buf, pktbuf_alloc(16));
+    pktbuf_merge(buf, pktbuf_alloc(32));
+    pktbuf_merge(buf, pktbuf_alloc(64));
+
+    pktbuf_set_cont(buf, 44);
+    pktbuf_set_cont(buf, 60);
+    pktbuf_set_cont(buf, 200);
+
+    pktbuf_free(buf);
 }
 
 void test()

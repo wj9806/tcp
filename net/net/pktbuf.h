@@ -148,4 +148,10 @@ net_err_t pktbuf_resize(pktbuf_t * buf, int size);
  */
 net_err_t pktbuf_merge(pktbuf_t * dest, pktbuf_t * src);
 
+/**
+ * set pktbuf's header continuous
+ * @param size Byte size to be merged
+ */
+net_err_t pktbuf_set_cont(pktbuf_t * buf, int size);
+
 #endif //NET_PKTBUF_H
