@@ -30,8 +30,17 @@ typedef struct pktbuf_t
     list_t blk_list;
     //data packet node
     node_t node;
+    //current data access pointer
+    int pos;
+    //current data access pktblk
+    pktblk_t * curr_blk;
+    //current data access pktblk's offset
+    uint8_t * blk_offset;
 } pktbuf_t;
 
+/**
+ * init the pktbuf
+ */
 net_err_t pktbuf_init(void);
 
 //alloc given size pktbuf_t
@@ -153,5 +162,10 @@ net_err_t pktbuf_merge(pktbuf_t * dest, pktbuf_t * src);
  * @param size Byte size to be merged
  */
 net_err_t pktbuf_set_cont(pktbuf_t * buf, int size);
+
+/**
+ * reset pktbuf data access pointer
+ */
+void pktbuf_reset_access(pktbuf_t * buf);
 
 #endif //NET_PKTBUF_H
