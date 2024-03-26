@@ -14,6 +14,7 @@ typedef enum net_err_t
     NET_ERR_TMO = -4,
     NET_ERR_SIZE = -5,
     NET_ERR_NONE = -6,
+    NET_ERR_PARAM = -7
 } net_err_t;
 
 #endif //NET_NET_ERR_H

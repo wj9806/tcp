@@ -137,6 +137,29 @@ static void pktbuf_insert_blk_list(pktbuf_t * buf, pktblk_t * block, int last)
 
 }
 
+/**
+ * Obtain the remaining data block size of buf
+ * @return size
+ */
+static inline int total_blk_remain(pktbuf_t * buf)
+{
+    return buf->total_size - buf->pos;
+}
+
+/**
+ * Obtain the remaining current data block size of buf
+ * @return size
+ */
+static inline int curr_blk_remain(pktbuf_t * buf)
+{
+    pktblk_t * block = buf->curr_blk;
+    if (!block)
+    {
+        return 0;
+    }
+    return (int)(block->data + block->size - buf->blk_offset);
+}
+
 pktbuf_t * pktbuf_alloc(int size)
 {
     pktbuf_t * buf = mblock_alloc(&pktbuf_list, -1);
@@ -407,4 +430,57 @@ void pktbuf_reset_access(pktbuf_t * buf)
         else
             buf->blk_offset = (uint8_t *)0;
     }
+}
+
+/**
+ * Move the write pointer forward
+ */
+static void move_forward(pktbuf_t * buf, int size)
+{
+    buf->pos += size;
+    buf->blk_offset += size;
+
+    pktblk_t * curr = buf->curr_blk;
+    if (buf->blk_offset >= curr->data + curr->size)
+    {
+        // move to next data block
+        buf->curr_blk = pktblk_blk_next(curr);
+        if (buf->curr_blk)
+        {
+            buf->blk_offset = buf->curr_blk->data;
+        }
+        else
+        {
+            buf->blk_offset = (uint8_t *)0;
+        }
+    }
+}
+
+net_err_t pktbuf_write(pktbuf_t * buf, uint8_t * src, int size)
+{
+    if(!src || !size)
+    {
+        return NET_ERR_PARAM;
+    }
+
+    int remain_size = total_blk_remain(buf);
+    if (remain_size < size)
+    {
+        debug_error(DEBUG_PKTBUF, "size to big: %d > %d", size, remain_size);
+        return NET_ERR_SIZE;
+    }
+
+    while (size)
+    {
+        int blk_size = curr_blk_remain(buf);
+        int curr_copy = size > blk_size ? blk_size : size;
+
+        plat_memcpy(buf->blk_offset, src, curr_copy);
+        src += curr_copy;
+        size -= curr_copy;
+
+        move_forward(buf, curr_copy);
+    }
+
+    return NET_ERR_OK;
 }

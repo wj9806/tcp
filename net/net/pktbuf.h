@@ -64,6 +64,11 @@ static inline int curr_blk_tail_free(pktblk_t * blk)
     return (int) ((blk->payload + PKTBUF_BLK_SIZE) - (blk->data + blk->size));
 }
 
+static inline int pktbuf_total(pktbuf_t * buf)
+{
+    return buf->total_size;
+}
+
 /**
  * @param buf given pktbuf_t
  * @return given pktbuf_t's first pktblk_t
@@ -167,5 +172,12 @@ net_err_t pktbuf_set_cont(pktbuf_t * buf, int size);
  * reset pktbuf data access pointer
  */
 void pktbuf_reset_access(pktbuf_t * buf);
+
+/**
+ * write pktbuf
+ * @param src data
+ * @param size size of writes
+ */
+net_err_t pktbuf_write(pktbuf_t * buf, uint8_t * src, int size);
 
 #endif //NET_PKTBUF_H
