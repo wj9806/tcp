@@ -134,7 +134,7 @@ void pktbuf_test()
     pktbuf_read(buf, (uint8_t *) read_temp, pktbuf_total(buf));
     if (plat_memcmp(temp, read_temp, pktbuf_total(buf)) != 0)
     {
-        plat_printf("read failed, not eq");
+        plat_printf("read failed, not eq\n");
         return;
     }
 
@@ -143,10 +143,26 @@ void pktbuf_test()
     pktbuf_read(buf, (uint8_t *) read_temp, 256);
     if (plat_memcmp(temp + 85, read_temp, 256) != 0)
     {
-        plat_printf("read failed, not eq");
+        plat_printf("read failed, not eq\n");
         return;
     }
 
+    pktbuf_t * dest = pktbuf_alloc(1024);
+    pktbuf_seek(dest, 600);
+    pktbuf_seek(buf, 200);
+
+    pktbuf_copy(dest, buf, 120);
+    plat_memset(read_temp, 0, sizeof(read_temp));
+    pktbuf_seek(dest, 600);
+    pktbuf_read(dest, (uint8_t *) read_temp, 120);
+    if (plat_memcmp(temp + 100, read_temp, 120) != 0)
+    {
+        plat_printf("copy failed, not eq\n");
+        return;
+    }
+
+    pktbuf_free(dest);
+    pktbuf_free(buf);
 }
 
 void test()

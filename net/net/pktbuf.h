@@ -194,4 +194,12 @@ net_err_t pktbuf_read(pktbuf_t * buf, uint8_t * dest, int size);
  */
 net_err_t pktbuf_seek(pktbuf_t * buf, int offset);
 
+/**
+ * Copy from the pos of src to dest
+ * @param dest dest buf
+ * @param src src buf
+ * @param size copy size
+ */
+net_err_t pktbuf_copy(pktbuf_t * dest, pktbuf_t * src, int size);
+
 #endif //NET_PKTBUF_H
