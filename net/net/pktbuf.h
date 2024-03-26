@@ -202,4 +202,9 @@ net_err_t pktbuf_seek(pktbuf_t * buf, int offset);
  */
 net_err_t pktbuf_copy(pktbuf_t * dest, pktbuf_t * src, int size);
 
+/**
+ * Fills buf with a value of the specified size
+ */
+net_err_t pktbuf_fill(pktbuf_t * buf, uint8_t v, int size);
+
 #endif //NET_PKTBUF_H
