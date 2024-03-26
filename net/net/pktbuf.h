@@ -187,4 +187,11 @@ net_err_t pktbuf_write(pktbuf_t * buf, uint8_t * src, int size);
  */
 net_err_t pktbuf_read(pktbuf_t * buf, uint8_t * dest, int size);
 
+/**
+ * set read-write pointer
+ * @param offset the offset pos
+ * @return
+ */
+net_err_t pktbuf_seek(pktbuf_t * buf, int offset);
+
 #endif //NET_PKTBUF_H

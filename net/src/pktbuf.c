@@ -513,3 +513,42 @@ net_err_t pktbuf_read(pktbuf_t * buf, uint8_t * dest, int size)
 
     return NET_ERR_OK;
 }
+
+net_err_t pktbuf_seek(pktbuf_t * buf, int offset)
+{
+    if (buf->pos == offset)
+    {
+        return NET_ERR_OK;
+    }
+
+    if (offset < 0 || (offset >= buf->total_size))
+    {
+        return NET_ERR_PARAM;
+    }
+
+    int move_bytes;
+    if (offset < buf->pos)
+    {
+        //Move from header block
+        buf->curr_blk = pktbuf_first_blk(buf);
+        buf->blk_offset = buf->curr_blk->data;
+        buf->pos = 0;
+        move_bytes = offset;
+    }
+    else
+    {
+        //Move from current block
+        move_bytes = offset - buf->pos;
+    }
+
+    while (move_bytes)
+    {
+        int remain_size = curr_blk_remain(buf);
+        int curr_move = move_bytes > remain_size ? remain_size : move_bytes;
+
+        move_forward(buf, curr_move);
+        move_bytes -= curr_move;
+    }
+
+    return NET_ERR_OK;
+}
