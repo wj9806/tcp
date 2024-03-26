@@ -180,4 +180,11 @@ void pktbuf_reset_access(pktbuf_t * buf);
  */
 net_err_t pktbuf_write(pktbuf_t * buf, uint8_t * src, int size);
 
+/**
+ * read pktbuf
+ * @param dest read result into dest
+ * @param size size of read
+ */
+net_err_t pktbuf_read(pktbuf_t * buf, uint8_t * dest, int size);
+
 #endif //NET_PKTBUF_H

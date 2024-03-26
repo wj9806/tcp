@@ -126,6 +126,17 @@ void pktbuf_test()
         temp[i] = i;
     }
     pktbuf_write(buf, (uint8_t *) temp, pktbuf_total(buf));
+
+    //reset read-write pointer
+    pktbuf_reset_access(buf);
+    static uint16_t read_temp[1000];
+    plat_memset(read_temp, 0, sizeof(read_temp));
+    pktbuf_read(buf, (uint8_t *) read_temp, pktbuf_total(buf));
+    if (plat_memcmp(temp, read_temp, pktbuf_total(buf)) != 0)
+    {
+        plat_printf("read failed, not eq");
+        return;
+    }
 }
 
 void test()
