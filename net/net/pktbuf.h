@@ -28,6 +28,8 @@ typedef struct pktbuf_t
     int total_size;
     //data block list, which save pktblk_t's node
     list_t blk_list;
+    //reference count
+    int ref;
     //data packet node
     node_t node;
     //current data access pointer
@@ -87,6 +89,15 @@ static inline pktblk_t * pktbuf_last_blk(pktbuf_t * buf)
 {
     node_t * last = list_last(&buf->blk_list);
     return list_node_parent(last, pktblk_t, node);
+}
+
+/**
+ * @return first block data of pktbuf
+ */
+static inline uint8_t * pktbuf_data(pktbuf_t * buf)
+{
+    pktblk_t * first = pktbuf_first_blk(buf);
+    return first ? first->data : (uint8_t *) 0;
 }
 
 /**
@@ -206,5 +217,10 @@ net_err_t pktbuf_copy(pktbuf_t * dest, pktbuf_t * src, int size);
  * Fills buf with a value of the specified size
  */
 net_err_t pktbuf_fill(pktbuf_t * buf, uint8_t v, int size);
+
+/**
+ * Increase reference count
+ */
+void pktbuf_inc_ref(pktbuf_t * buf);
 
 #endif //NET_PKTBUF_H

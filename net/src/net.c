@@ -5,6 +5,7 @@
 
 net_err_t net_init(void)
 {
+    debug_info(DEBUG_INIT, "init net");
     net_plat_init();
     exmsg_init();
     pktbuf_init();
@@ -14,5 +15,6 @@ net_err_t net_init(void)
 net_err_t net_start(void)
 {
     exmsg_start();
+    debug_info(DEBUG_INIT, "net is running.");
     return NET_ERR_OK;
 }

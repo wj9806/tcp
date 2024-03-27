@@ -11,6 +11,8 @@
 #define DEBUG_QUEUE             DEBUG_LEVEL_INFO
 #define DEBUG_MSG               DEBUG_LEVEL_INFO
 #define DEBUG_PKTBUF            DEBUG_LEVEL_INFO
+#define DEBUG_INIT              DEBUG_LEVEL_INFO
+#define DEBUG_PLAT              DEBUG_LEVEL_INFO
 
 
 #define EXMSG_MSG_CNT           10
