@@ -5,6 +5,7 @@
 #include "list.h"
 #include "mblock.h"
 #include "pktbuf.h"
+#include "netif.h"
 
 #define DEBUG_TEST    DEBUG_LEVEL_INFO
 
