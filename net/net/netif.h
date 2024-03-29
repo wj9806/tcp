@@ -60,4 +60,16 @@ typedef struct netif_t {
     void * out_q_buf[NETIF_OUTQ_SIZE];
 } netif_t;
 
+/**
+ * init net interface
+ */
+net_err_t netif_init();
+
+/**
+ * open given name's net interface
+ * @param dev_name
+ * @return
+ */
+netif_t * netif_open(const char * dev_name);
+
 #endif //NET_NETIF_H

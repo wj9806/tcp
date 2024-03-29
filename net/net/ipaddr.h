@@ -20,4 +20,9 @@ typedef struct ipaddr_t {
 
 } ipaddr_t;
 
+/**
+ * Set a default value for the ip address
+ */
+void ipaddr_set_any(ipaddr_t * ip);
+
 #endif //NET_IPADDR_H

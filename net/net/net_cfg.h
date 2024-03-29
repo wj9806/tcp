@@ -13,6 +13,7 @@
 #define DEBUG_PKTBUF            DEBUG_LEVEL_INFO
 #define DEBUG_INIT              DEBUG_LEVEL_INFO
 #define DEBUG_PLAT              DEBUG_LEVEL_INFO
+#define DEBUG_NETIF             DEBUG_LEVEL_INFO
 
 
 #define EXMSG_MSG_CNT           10
@@ -24,7 +25,8 @@
 
 #define NETIF_HWADDR_SIZE       10
 #define NETIF_NAME_SIZE         10
-#define NETIF_INQ_SIZE            50
-#define NETIF_OUTQ_SIZE           50
+#define NETIF_INQ_SIZE          50
+#define NETIF_OUTQ_SIZE         50
+#define NETIF_DEV_CNT           10
 
 #endif //NET_NET_CFG_H

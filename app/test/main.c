@@ -190,6 +190,8 @@ void test()
     list_test();
     mblock_test();
     pktbuf_test();
+    netif_t * netif = netif_open("pcap");
+
 }
 
 int main()
