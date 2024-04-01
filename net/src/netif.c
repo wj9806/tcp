@@ -19,7 +19,7 @@ net_err_t netif_init()
     return NET_ERR_OK;
 }
 
-netif_t * netif_open(const char * dev_name)
+netif_t * netif_open(const char * dev_name, netif_ops_t * ops, void * ops_data)
 {
     netif_t * netif = (netif_t *) mblock_alloc(&netif_block, - 1);
     if (!netif)
@@ -40,6 +40,7 @@ netif_t * netif_open(const char * dev_name)
     if (err < 0)
     {
         debug_error(DEBUG_NETIF, "netif in_q init failed");
+        mblock_free(&netif_block, netif);
         return (netif_t *) 0;
     }
     err = fixq_init(&netif->out_q, netif->out_q_buf, NETIF_OUTQ_SIZE, LOCKER_THREAD);
@@ -47,10 +48,36 @@ netif_t * netif_open(const char * dev_name)
     {
         debug_error(DEBUG_NETIF, "netif out_q init failed");
         fixq_destroy(&netif->in_q);
+        mblock_free(&netif_block, netif);
         return (netif_t *) 0;
+    }
+    err = ops->open(netif, ops_data);
+    if (err < 0)
+    {
+        debug_error(DEBUG_NETIF, "netif ops open err");
+        goto error_handle;
     }
     netif->state = NETIF_OPENED;
 
+    if (netif->type == NETIF_TYPE_NONE)
+    {
+        debug_error(DEBUG_NETIF, "netif type unknown");
+        goto error_handle;
+    }
+
+    netif->ops = ops;
+    netif->ops_data = ops_data;
+
     list_insert_last(&netif_list, &netif->node);
     return netif;
+
+    error_handle:
+    if (netif->state == NETIF_OPENED)
+    {
+        netif->ops->close(netif);
+    }
+    fixq_destroy(&netif->in_q);
+    fixq_destroy(&netif->out_q);
+    mblock_free(&netif_block, netif);
+    return (netif_t *)0;
 }

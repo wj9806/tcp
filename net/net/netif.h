@@ -24,6 +24,15 @@ typedef enum netif_type_t {
     NETIF_TYPE_LOOP,
 } netif_type_t;
 
+struct netif_t;
+
+typedef struct netif_ops_t
+{
+    net_err_t (*open)(struct netif_t * netif, void * data);
+    void (*close)(struct netif_t * netif);
+    net_err_t (*xmit)(struct netif_t * netif);
+} netif_ops_t;
+
 /**
  * net interface
  */
@@ -48,6 +57,11 @@ typedef struct netif_t {
         NETIF_OPENED,
         NETIF_ACTIVE,
     } state;
+
+    //net operation
+    netif_ops_t * ops;
+    void * ops_data;
+
     //node
     node_t node;
     //input fixed msg queue
@@ -70,6 +84,6 @@ net_err_t netif_init();
  * @param dev_name
  * @return
  */
-netif_t * netif_open(const char * dev_name);
+netif_t * netif_open(const char * dev_name, netif_ops_t * ops, void * ops_data);
 
 #endif //NET_NETIF_H
