@@ -81,3 +81,36 @@ netif_t * netif_open(const char * dev_name, netif_ops_t * ops, void * ops_data)
     mblock_free(&netif_block, netif);
     return (netif_t *)0;
 }
+
+net_err_t netif_set_addr(netif_t * netif, ipaddr_t * ip, ipaddr_t * mask, ipaddr_t * gateway)
+{
+    ipaddr_copy(&netif->ipaddr, ip ? ip : ipaddr_get_any());
+    ipaddr_copy(&netif->netmask, mask ? mask : ipaddr_get_any());
+    ipaddr_copy(&netif->gateway, gateway ? gateway : ipaddr_get_any());
+    return NET_ERR_OK;
+}
+
+net_err_t netif_set_hwaddr(netif_t  * netif, const char * hwaddr, int len)
+{
+    plat_memcpy(netif->hwaddr.addr, hwaddr, len);
+    netif->hwaddr.len = len;
+    return NET_ERR_OK;
+}
+
+void ipaddr_copy(ipaddr_t * dest, const ipaddr_t * src)
+{
+    if (!dest || !src)
+    {
+        return;
+    }
+
+    dest->type = src->type;
+    dest->q_addr = src->q_addr;
+
+}
+
+ipaddr_t * ipaddr_get_any(void)
+{
+    static const ipaddr_t ipaddr_any = {.type = IPADDR_V4, .q_addr = 0};
+    return (ipaddr_t *)&ipaddr_any;
+}

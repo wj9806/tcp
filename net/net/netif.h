@@ -86,4 +86,18 @@ net_err_t netif_init();
  */
 netif_t * netif_open(const char * dev_name, netif_ops_t * ops, void * ops_data);
 
+/**
+ * set netif's ipaddr
+ */
+net_err_t netif_set_addr(netif_t * netif, ipaddr_t * ip, ipaddr_t * mask, ipaddr_t * gateway);
+
+/**
+ * set netif's hardware addr
+ */
+net_err_t netif_set_hwaddr(netif_t  * netif, const char * hwaddr, int len);
+
+void ipaddr_copy(ipaddr_t * dest, const ipaddr_t * src);
+
+ipaddr_t * ipaddr_get_any(void);
+
 #endif //NET_NETIF_H
