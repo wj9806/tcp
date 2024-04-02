@@ -9,6 +9,7 @@
 #include "list.h"
 #include "fixq.h"
 #include "net_cfg.h"
+#include "pktbuf.h"
 
 //hardware addr
 typedef struct netif_hwaddr_t {
@@ -115,5 +116,27 @@ net_err_t netif_close(netif_t * netif);
  * set default net interface
  */
 void netif_set_default(netif_t * netif);
+
+/**
+ * write data packet to net interface's in_q
+ * @param tmo timeout
+ */
+net_err_t netif_put_in(netif_t * netif, pktbuf_t * buf, int tmo);
+
+/**
+ * get data packet from net interface's in_q
+ */
+pktbuf_t * netif_get_in(netif_t * netif, int tmo);
+
+/**
+ * write data packet to net interface's out_q
+ * @param tmo timeout
+ */
+net_err_t netif_put_out(netif_t * netif, pktbuf_t * buf, int tmo);
+
+/**
+ * get data packet from net interface's out_q
+ */
+pktbuf_t * netif_get_out(netif_t * netif, int tmo);
 
 #endif //NET_NETIF_H
