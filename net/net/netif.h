@@ -94,10 +94,16 @@ net_err_t netif_set_addr(netif_t * netif, ipaddr_t * ip, ipaddr_t * mask, ipaddr
 /**
  * set netif's hardware addr
  */
-net_err_t netif_set_hwaddr(netif_t  * netif, const char * hwaddr, int len);
+net_err_t netif_set_hwaddr(netif_t * netif, const char * hwaddr, int len);
 
-void ipaddr_copy(ipaddr_t * dest, const ipaddr_t * src);
+/**
+ * set netif active state
+ */
+net_err_t netif_set_active(netif_t * netif);
 
-ipaddr_t * ipaddr_get_any(void);
+/**
+ * set netif deactive state
+ */
+net_err_t netif_set_deactive(netif_t * netif);
 
 #endif //NET_NETIF_H

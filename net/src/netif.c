@@ -3,6 +3,7 @@
 //
 #include "netif.h"
 #include "mblock.h"
+#include "pktbuf.h"
 
 static netif_t netif_buffer[NETIF_DEV_CNT];
 static mblock_t netif_block;
@@ -113,4 +114,40 @@ ipaddr_t * ipaddr_get_any(void)
 {
     static const ipaddr_t ipaddr_any = {.type = IPADDR_V4, .q_addr = 0};
     return (ipaddr_t *)&ipaddr_any;
+}
+
+net_err_t netif_set_active(netif_t * netif)
+{
+    if (netif->state != NETIF_OPENED)
+    {
+        debug_error(DEBUG_NETIF, "netif is not opened");
+        return NET_ERR_STATE;
+    }
+    netif->state = NETIF_ACTIVE;
+    return NET_ERR_OK;
+}
+
+net_err_t netif_set_deactive(netif_t * netif)
+{
+    if (netif->state != NETIF_ACTIVE)
+    {
+        debug_error(DEBUG_NETIF, "netif is not actived");
+        return NET_ERR_STATE;
+    }
+    //free pktbufs
+    pktbuf_t * buf;
+    while ((buf = fixq_recv(&netif->in_q, -1)) != (pktbuf_t *) 0)
+    {
+        pktbuf_free(buf);
+    }
+    while ((buf = fixq_recv(&netif->out_q, -1)) != (pktbuf_t *) 0)
+    {
+        pktbuf_free(buf);
+    }
+    if (netif_default == netif)
+    {
+        netif_default = (netif_t *) 0;
+    }
+    netif->state = NETIF_OPENED;
+    return NET_ERR_OK;
 }

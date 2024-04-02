@@ -31,4 +31,14 @@ void ipaddr_set_any(ipaddr_t * ip);
  */
 net_err_t ipaddr_from_str(ipaddr_t * dest, const char * str);
 
+/**
+ * copy addr from dest to src
+ */
+void ipaddr_copy(ipaddr_t * dest, const ipaddr_t * src);
+
+/**
+ * get default ipaddr
+ */
+ipaddr_t * ipaddr_get_any(void);
+
 #endif //NET_IPADDR_H

@@ -42,5 +42,6 @@ net_err_t loop_init()
     ipaddr_from_str(&mask, "255.0.0.0");
 
     netif_set_addr(netif, &ip, &mask, (ipaddr_t *)0);
+    netif_set_active(netif);
     return NET_ERR_OK;
 }
