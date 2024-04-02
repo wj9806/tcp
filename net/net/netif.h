@@ -106,4 +106,14 @@ net_err_t netif_set_active(netif_t * netif);
  */
 net_err_t netif_set_deactive(netif_t * netif);
 
+/**
+ * close the given net interface
+ */
+net_err_t netif_close(netif_t * netif);
+
+/**
+ * set default net interface
+ */
+void netif_set_default(netif_t * netif);
+
 #endif //NET_NETIF_H
