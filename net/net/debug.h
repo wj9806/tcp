@@ -6,6 +6,7 @@
 #define NET_DEBUG_H
 
 #include "net_cfg.h"
+#include "ipaddr.h"
 
 #define EN_DEBUG
 
@@ -19,6 +20,9 @@
 #define DEBUG_LEVEL_INFO        3
 
 void debug_print(int module, int level, const char * file, const char * func, int line, const char * fmt, ...);
+
+void debug_dump_hwaddr(const char * msg, const uint8_t * hwaddr, int len);
+void debug_dump_ip(const char * msg, ipaddr_t * ipaddr);
 
 #define debug_info(module, fmt, ...)  debug_print(module, DEBUG_LEVEL_INFO, __FILE__, __FUNCTION__, __LINE__, fmt, ##__VA_ARGS__)
 #define debug_warn(module, fmt, ...)  debug_print(module, DEBUG_LEVEL_WARN, __FILE__, __FUNCTION__, __LINE__, fmt, ##__VA_ARGS__)

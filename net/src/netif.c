@@ -10,6 +10,53 @@ static mblock_t netif_block;
 static list_t netif_list;
 static netif_t * netif_default;
 
+#if DEBUG_DISP_ENABLED(DEBUG_NETIF)
+void display_netif_list(void)
+{
+    plat_printf("netif list: \n");
+    node_t * node;
+    list_for_each(node, &netif_list)
+    {
+        netif_t * netif = list_node_parent(node, netif_t, node);
+
+        plat_printf("%s:", netif->name);
+        switch (netif->state) {
+            case NETIF_CLOSED:
+                plat_printf(" %s ", "closed");
+                break;
+            case NETIF_OPENED:
+                plat_printf(" %s ", "opened");
+                break;
+            case NETIF_ACTIVE:
+                plat_printf(" %s ", "active");
+                break;
+            default:
+                break;
+        }
+
+        switch (netif->type) {
+            case NETIF_TYPE_ETHER:
+                plat_printf(" %s ", "ether");
+                break;
+            case NETIF_TYPE_LOOP:
+                plat_printf(" %s ", "loop");
+                break;
+            default:
+                break;
+        }
+
+        plat_printf(" mtu=%d\n", netif->mtu);
+        debug_dump_hwaddr("hwaddr: ", netif->hwaddr.addr, netif->hwaddr.len);
+        debug_dump_ip(" ip:", &netif->ipaddr);
+        debug_dump_ip(" netmask:", &netif->netmask);
+        debug_dump_ip(" getway:", &netif->gateway);
+        plat_printf("\n");
+    }
+}
+#else
+#define display_netif_list()
+#endif
+
 net_err_t netif_init()
 {
     debug_info(DEBUG_NETIF, "init netif");
@@ -70,8 +117,8 @@ netif_t * netif_open(const char * dev_name, netif_ops_t * ops, void * ops_data)
     netif->ops_data = ops_data;
 
     list_insert_last(&netif_list, &netif->node);
+    display_netif_list();
     return netif;
-
     error_handle:
     if (netif->state == NETIF_OPENED)
     {
@@ -124,6 +171,7 @@ net_err_t netif_set_active(netif_t * netif)
         return NET_ERR_STATE;
     }
     netif->state = NETIF_ACTIVE;
+    display_netif_list();
     return NET_ERR_OK;
 }
 
@@ -149,5 +197,6 @@ net_err_t netif_set_deactive(netif_t * netif)
         netif_default = (netif_t *) 0;
     }
     netif->state = NETIF_OPENED;
+    display_netif_list();
     return NET_ERR_OK;
 }

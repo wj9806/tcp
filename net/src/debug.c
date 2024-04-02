@@ -51,3 +51,48 @@ void debug_print(int module_level, int level, const char * file, const char * fu
     }
 #endif
 }
+
+void debug_dump_hwaddr(const char * msg, const uint8_t * hwaddr, int len)
+{
+    if (msg)
+    {
+        plat_printf("%s", msg);
+    }
+
+    if (len)
+    {
+        for (int i = 0; i < len; ++i) {
+            if (i == len - 1)
+            {
+                plat_printf("%02x", hwaddr[i]);
+            }
+            else
+            {
+                plat_printf("%02x-", hwaddr[i]);
+            }
+
+        }
+    }
+    else
+    {
+        plat_printf("none");
+    }
+
+}
+
+void debug_dump_ip(const char * msg, ipaddr_t * ipaddr)
+{
+    if (msg)
+    {
+        plat_printf("%s", msg);
+    }
+
+    if (ipaddr)
+    {
+        plat_printf("%d.%d.%d.%d", ipaddr->addr[0], ipaddr->addr[1], ipaddr->addr[2], ipaddr->addr[3]);
+    }
+    else
+    {
+        plat_printf("0.0.0.0");
+    }
+}
