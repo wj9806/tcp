@@ -47,7 +47,7 @@ static void work_thread(void * arg)
     }
 }
 
-net_err_t exmsg_netif_in()
+net_err_t exmsg_netif_in(netif_t * netif)
 {
     exmsg_t * msg = mblock_alloc(&msg_block, -1);
     if (!msg)

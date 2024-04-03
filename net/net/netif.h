@@ -139,4 +139,9 @@ net_err_t netif_put_out(netif_t * netif, pktbuf_t * buf, int tmo);
  */
 pktbuf_t * netif_get_out(netif_t * netif, int tmo);
 
+/**
+ * send data packet to given ipaddr
+ */
+net_err_t netif_out(netif_t * netif, ipaddr_t * ipaddr, pktbuf_t * buf);
+
 #endif //NET_NETIF_H

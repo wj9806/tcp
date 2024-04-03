@@ -17,6 +17,18 @@ void loop_close(struct netif_t * netif)
 
 net_err_t loop_xmit(struct netif_t * netif)
 {
+    //get data packet from out_q
+    pktbuf_t * pktbuf = netif_get_out(netif, -1);
+    if (pktbuf)
+    {
+        //put data packet into in_q
+        net_err_t err = netif_put_in(netif, pktbuf, -1);
+        if (err < 0)
+        {
+            pktbuf_free(pktbuf);
+            return err;
+        }
+    }
     return NET_ERR_OK;
 }
 
@@ -43,5 +55,6 @@ net_err_t loop_init()
 
     netif_set_addr(netif, &ip, &mask, (ipaddr_t *)0);
     netif_set_active(netif);
+
     return NET_ERR_OK;
 }
