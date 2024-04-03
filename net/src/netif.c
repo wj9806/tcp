@@ -50,7 +50,7 @@ void display_netif_list(void)
         debug_dump_hwaddr("hwaddr: ", netif->hwaddr.addr, netif->hwaddr.len);
         debug_dump_ip(" ip:", &netif->ipaddr);
         debug_dump_ip(" netmask:", &netif->netmask);
-        debug_dump_ip(" getway:", &netif->gateway);
+        debug_dump_ip(" gateway:", &netif->gateway);
         plat_printf("\n");
     }
 }
@@ -68,7 +68,7 @@ net_err_t netif_init()
     return NET_ERR_OK;
 }
 
-netif_t * netif_open(const char * dev_name, netif_ops_t * ops, void * ops_data)
+netif_t * netif_open(const char * dev_name, const netif_ops_t * ops, void * ops_data)
 {
     netif_t * netif = (netif_t *) mblock_alloc(&netif_block, - 1);
     if (!netif)

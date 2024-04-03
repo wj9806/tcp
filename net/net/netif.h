@@ -50,7 +50,10 @@ typedef struct netif_t {
     ipaddr_t gateway;
     //net if type
     netif_type_t type;
-    //mtu
+    /**
+     * mtu: Maximum Transmission Unit
+     * The maximum number of bytes of data payload that can be transmitted at the data link layer
+     */
     int mtu;
     //netif state
     enum {
@@ -85,7 +88,7 @@ net_err_t netif_init();
  * @param dev_name
  * @return
  */
-netif_t * netif_open(const char * dev_name, netif_ops_t * ops, void * ops_data);
+netif_t * netif_open(const char * dev_name, const netif_ops_t * ops, void * ops_data);
 
 /**
  * set netif's ipaddr

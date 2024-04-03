@@ -612,7 +612,6 @@ pcap_t * pcap_device_open(const char* ip, const uint8_t* mac_addr) {
         return (pcap_t *)0;
     }
 
-    // 利用上层传来的ip地址，
     char name_buf[256];
     if (pcap_find_device(ip, name_buf) < 0) {
         fprintf(stderr, "pcap find error: no net card has ip: %s. \n", ip);
@@ -620,7 +619,7 @@ pcap_t * pcap_device_open(const char* ip, const uint8_t* mac_addr) {
         return (pcap_t*)0;
     }
 
-    // 根据名称获取ip地址、掩码等
+    // get ip、netmask
     char err_buf[PCAP_ERRBUF_SIZE];
     bpf_u_int32 mask;
     bpf_u_int32 net;
@@ -630,7 +629,7 @@ pcap_t * pcap_device_open(const char* ip, const uint8_t* mac_addr) {
         mask = 0;
     }
 
-    // 打开设备
+    // open device
     pcap_t * pcap = pcap_create(name_buf, err_buf);
     if (pcap == NULL) {
         fprintf(stderr, "pcap_create: create pcap failed %s\n net card name: %s\n", err_buf, name_buf);

@@ -34,9 +34,24 @@ void list_test()
     }
 }
 
-net_err_t net_dev_init()
+pcap_data_t netdev0_data = {.ip = netdev0_phy_ip, .hwaddr = netdev0_hwaddr};
+
+net_err_t netdev_init()
 {
-    netif_pcap_open();
+    netif_t * netif = netif_open("netif 0", &netdev_ops, &netdev0_data);
+    if (!netif)
+    {
+        debug_error(DEBUG_NETIF, "open netif error");
+        return NET_ERR_NONE;
+    }
+
+    ipaddr_t ip, mask, gw;
+    ipaddr_from_str(&ip, netdev0_ip);
+    ipaddr_from_str(&mask, netdev0_mask);
+    ipaddr_from_str(&gw, netdev0_gw);
+
+    netif_set_addr(netif, &ip, &mask, &gw);
+    netif_set_active(netif);
 
     return NET_ERR_OK;
 }
@@ -197,11 +212,11 @@ void test()
 int main()
 {
     net_init();
+    netdev_init();
     net_start();
-    net_dev_init();
-
+#ifdef TEST
     test();
-
+#endif
     for(;;)
     {
         sys_sleep(10);
