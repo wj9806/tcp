@@ -286,6 +286,6 @@ net_err_t netif_out(netif_t * netif, ipaddr_t * ipaddr, pktbuf_t * buf)
         debug_error(DEBUG_NETIF, "send failed");
         return err;
     }
-
+    pktbuf_inc_ref(buf);
     return netif->ops->xmit(netif);
 }

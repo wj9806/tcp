@@ -42,9 +42,25 @@ void xmit_thread (void * arg)
 {
     plat_printf("xmit thread is running!\n");
 
+    netif_t * netif = (netif_t *) arg;
+    pcap_t * pcap = (pcap_t *) netif->ops_data;
+
+    static uint8_t rw_buffer[1500 + 6 + 6 + 2];
     while (1)
     {
-        sys_sleep(1);
+        pktbuf_t * buf = netif_get_out(netif, 0);
+        if (buf == (pktbuf_t *)0)
+        {
+            continue;
+        }
+        plat_memset(rw_buffer, 0, sizeof(rw_buffer));
+        int total_size = buf->total_size;
+        pktbuf_read(buf, rw_buffer, total_size);
+        pktbuf_free(buf);
+        if (pcap_inject(pcap, rw_buffer, total_size) == -1)
+        {
+            debug_error(DEBUG_NETIF, "pcap send failed, size:%d err:%s\n", total_size, pcap_geterr(pcap));
+        }
     }
 }
 
