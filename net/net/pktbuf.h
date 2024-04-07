@@ -189,7 +189,7 @@ void pktbuf_reset_access(pktbuf_t * buf);
  * @param src data
  * @param size size of writes
  */
-net_err_t pktbuf_write(pktbuf_t * buf, uint8_t * src, int size);
+net_err_t pktbuf_write(pktbuf_t * buf, const uint8_t * src, int size);
 
 /**
  * read pktbuf

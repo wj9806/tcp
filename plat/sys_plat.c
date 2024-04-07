@@ -608,7 +608,7 @@ int pcap_show_list(void) {
 pcap_t * pcap_device_open(const char* ip, const uint8_t* mac_addr) {
     // load pcap lib
     if (load_pcap_lib() < 0) {
-        fprintf(stderr, "load pcap lib error¡£please isntallnpcap.dll\n");
+        fprintf(stderr, "load pcap lib error¡£please isntall npcap.dll\n");
         return (pcap_t *)0;
     }
 

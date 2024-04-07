@@ -481,7 +481,7 @@ static void move_forward(pktbuf_t * buf, int size)
     }
 }
 
-net_err_t pktbuf_write(pktbuf_t * buf, uint8_t * src, int size)
+net_err_t pktbuf_write(pktbuf_t * buf, const uint8_t * src, int size)
 {
     assert(buf->ref != 0, "buf ref == 0")
     if(!src || !size)

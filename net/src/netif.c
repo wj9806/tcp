@@ -100,6 +100,8 @@ netif_t * netif_open(const char * dev_name, const netif_ops_t * ops, void * ops_
         mblock_free(&netif_block, netif);
         return (netif_t *) 0;
     }
+    netif->ops = ops;
+    netif->ops_data = ops_data;
     err = ops->open(netif, ops_data);
     if (err < 0)
     {
@@ -113,9 +115,6 @@ netif_t * netif_open(const char * dev_name, const netif_ops_t * ops, void * ops_
         debug_error(DEBUG_NETIF, "netif type unknown");
         goto error_handle;
     }
-
-    netif->ops = ops;
-    netif->ops_data = ops_data;
 
     list_insert_last(&netif_list, &netif->node);
     display_netif_list();

@@ -32,6 +32,20 @@ net_err_t exmsg_init(void)
     return NET_ERR_OK;
 }
 
+static net_err_t do_netif_in (exmsg_t * msg)
+{
+    netif_t * netif = msg->netif.netif;
+
+    pktbuf_t * buf;
+    while ((buf = netif_get_in(netif, -1)))
+    {
+        debug_info(DEBUG_MSG, "recv a packet\n");
+        //#todo handle msg
+
+        pktbuf_free(buf);
+    }
+}
+
 static void work_thread(void * arg)
 {
     debug_info(DEBUG_MSG, "exmsg is running\n");
@@ -40,7 +54,15 @@ static void work_thread(void * arg)
     {
         exmsg_t * msg = (exmsg_t *) fixq_recv(&msg_queue, 0);
         if (msg != (exmsg_t *)0) {
-            plat_printf("recv a msg: %d\n", msg->id);
+            debug_info(DEBUG_MSG, "recv a msg\n");
+
+            switch (msg->type) {
+                case NET_EXMSG_NETIF_IN:
+                    do_netif_in(msg);
+                    break;
+                default:
+                    break;
+            }
 
             mblock_free(&msg_block, msg);
         }
@@ -56,9 +78,9 @@ net_err_t exmsg_netif_in(netif_t * netif)
         return NET_ERR_MEM;
     }
 
-    static int id = 0;
     msg->type = NET_EXMSG_NETIF_IN;
-    msg->id = id++;
+    msg->netif.netif = netif;
+
     net_err_t err = fixq_send(&msg_queue, msg, -1);
     if (err < 0)
     {

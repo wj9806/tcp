@@ -9,14 +9,20 @@
 #include "list.h"
 #include "netif.h"
 
+
+typedef struct {
+    netif_t * netif;
+} msg_netif_t;
+
 typedef struct exmsg_t {
     node_t node;
     enum
     {
         NET_EXMSG_NETIF_IN,
     } type;
-
-    int id;
+    union {
+        msg_netif_t netif;
+    };
 } exmsg_t;
 
 net_err_t exmsg_init(void);
