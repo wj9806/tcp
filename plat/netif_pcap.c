@@ -3,7 +3,7 @@
 //
 #include "netif_pcap.h"
 #include "sys_plat.h"
-#include "exmsg.h"
+#include "ether.h"
 
 //data packet recv thread
 void recv_thread (void * arg)
@@ -75,7 +75,7 @@ net_err_t netif_pcap_open(struct netif_t * netif, void * data)
     }
 
     netif->type = NETIF_TYPE_ETHER;
-    netif->mtu = 1500;
+    netif->mtu = ETHER_MTU;
     netif->ops_data = pcap;
     netif_set_hwaddr(netif, (const char *) pcap_data->hwaddr, 6);
 
