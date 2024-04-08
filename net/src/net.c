@@ -5,11 +5,13 @@
 #include "netif.h"
 #include "loop.h"
 #include "ether.h"
+#include "tools.h"
 
 net_err_t net_init(void)
 {
     debug_info(DEBUG_INIT, "init net");
     net_plat_init();
+    tools_init();
     exmsg_init();
     pktbuf_init();
     netif_init();
