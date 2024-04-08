@@ -11,6 +11,8 @@ static mblock_t netif_block;
 static list_t netif_list;
 static netif_t * netif_default;
 
+static const link_layer_t * link_layers[NETIF_TYPE_SIZE];
+
 #if DEBUG_DISP_ENABLED(DEBUG_NETIF)
 void display_netif_list(void)
 {
@@ -65,7 +67,36 @@ net_err_t netif_init()
     mblock_init(&netif_block, netif_buffer, sizeof(netif_t ), NETIF_DEV_CNT, LOCKER_NONE);
 
     netif_default = (netif_t *) 0;
+    plat_memset(link_layers, 0, sizeof(link_layers));
     return NET_ERR_OK;
+}
+
+net_err_t netif_register_layer(int type, const link_layer_t * layer)
+{
+    if (type < 0 || type >= NETIF_TYPE_SIZE)
+    {
+        debug_error(DEBUG_NETIF, "type error:%d", type);
+        return NET_ERR_PARAM;
+    }
+
+    if (link_layers[type])
+    {
+        debug_error(DEBUG_NETIF, "link layer exist£» %d", type);
+        return NET_ERR_EXIST;
+    }
+
+    link_layers[type] = layer;
+    return NET_ERR_OK;
+}
+
+static const link_layer_t * netif_get_layer(int type)
+{
+    if (type < 0 || type >= NETIF_TYPE_SIZE)
+    {
+        debug_error(DEBUG_NETIF, "type error:%d", type);
+        return (link_layer_t *)0;
+    }
+    return link_layers[type];
 }
 
 netif_t * netif_open(const char * dev_name, const netif_ops_t * ops, void * ops_data)
@@ -113,6 +144,13 @@ netif_t * netif_open(const char * dev_name, const netif_ops_t * ops, void * ops_
     if (netif->type == NETIF_TYPE_NONE)
     {
         debug_error(DEBUG_NETIF, "netif type unknown");
+        goto error_handle;
+    }
+
+    netif->link_layer = netif_get_layer(netif->type);
+    if (!netif->link_layer && (netif->type != NETIF_TYPE_LOOP))
+    {
+        debug_error(DEBUG_NETIF, "link layer is null, netif name: %s", dev_name);
         goto error_handle;
     }
 
@@ -175,6 +213,16 @@ net_err_t netif_set_active(netif_t * netif)
         netif_set_default(netif);
     }
 
+    if (netif->link_layer)
+    {
+        net_err_t err = netif->link_layer->open(netif);
+        if (err < 0)
+        {
+            debug_error(DEBUG_NETIF, "link layer open failed");
+            return err;
+        }
+    }
+
     netif->state = NETIF_ACTIVE;
     display_netif_list();
     return NET_ERR_OK;
@@ -187,6 +235,11 @@ net_err_t netif_set_deactive(netif_t * netif)
         debug_error(DEBUG_NETIF, "netif is not actived");
         return NET_ERR_STATE;
     }
+    if (netif->link_layer)
+    {
+        netif->link_layer->close(netif);
+    }
+
     //free pktbufs
     pktbuf_t * buf;
     while ((buf = fixq_recv(&netif->in_q, -1)) != (pktbuf_t *) 0)

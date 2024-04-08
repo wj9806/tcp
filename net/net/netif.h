@@ -23,6 +23,8 @@ typedef enum netif_type_t {
     NETIF_TYPE_ETHER,
     //loop back
     NETIF_TYPE_LOOP,
+
+    NETIF_TYPE_SIZE,
 } netif_type_t;
 
 struct netif_t;
@@ -33,6 +35,14 @@ typedef struct netif_ops_t
     void (*close)(struct netif_t * netif);
     net_err_t (*xmit)(struct netif_t * netif);
 } netif_ops_t;
+
+typedef struct {
+    netif_type_t type;
+    net_err_t (*open)(struct netif_t * netif);
+    void (*close)(struct netif_t * netif);
+    net_err_t (*in)(struct netif_t * netif, pktbuf_t * buf);
+    net_err_t (*out)(struct netif_t * netif, ipaddr_t * dest, pktbuf_t * buf);
+} link_layer_t;
 
 /**
  * net interface
@@ -65,6 +75,9 @@ typedef struct netif_t {
     //net operation
     netif_ops_t * ops;
     void * ops_data;
+
+    //link layer
+    const link_layer_t * link_layer;
 
     //node
     node_t node;
@@ -146,5 +159,10 @@ pktbuf_t * netif_get_out(netif_t * netif, int tmo);
  * send data packet to given ipaddr
  */
 net_err_t netif_out(netif_t * netif, ipaddr_t * ipaddr, pktbuf_t * buf);
+
+/**
+ * register link layer
+ */
+net_err_t netif_register_layer(int type, const link_layer_t * layer);
 
 #endif //NET_NETIF_H

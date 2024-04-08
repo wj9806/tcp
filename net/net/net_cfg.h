@@ -14,6 +14,7 @@
 #define DEBUG_INIT              DEBUG_LEVEL_INFO
 #define DEBUG_PLAT              DEBUG_LEVEL_INFO
 #define DEBUG_NETIF             DEBUG_LEVEL_INFO
+#define DEBUG_ETHER             DEBUG_LEVEL_INFO
 
 
 #define EXMSG_MSG_CNT           10

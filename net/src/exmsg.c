@@ -39,7 +39,7 @@ static net_err_t do_netif_in (exmsg_t * msg)
     pktbuf_t * buf;
     while ((buf = netif_get_in(netif, -1)))
     {
-        debug_info(DEBUG_MSG, "recv a packet\n");
+        debug_info(DEBUG_MSG, "recv a packet");
 
         pktbuf_fill(buf, 0x11, 6);
         net_err_t err = netif_out(netif, (ipaddr_t *)0, buf);
@@ -54,13 +54,13 @@ static net_err_t do_netif_in (exmsg_t * msg)
 
 static void work_thread(void * arg)
 {
-    debug_info(DEBUG_MSG, "exmsg is running\n");
+    debug_info(DEBUG_MSG, "exmsg is running");
 
     while (1)
     {
         exmsg_t * msg = (exmsg_t *) fixq_recv(&msg_queue, 0);
         if (msg != (exmsg_t *)0) {
-            debug_info(DEBUG_MSG, "recv a msg\n");
+            debug_info(DEBUG_MSG, "recv a msg");
 
             switch (msg->type) {
                 case NET_EXMSG_NETIF_IN:

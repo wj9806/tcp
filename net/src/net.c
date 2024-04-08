@@ -4,6 +4,7 @@
 #include "pktbuf.h"
 #include "netif.h"
 #include "loop.h"
+#include "ether.h"
 
 net_err_t net_init(void)
 {
@@ -13,6 +14,7 @@ net_err_t net_init(void)
     pktbuf_init();
     netif_init();
     loop_init();
+    ether_init();
     return NET_ERR_OK;
 }
 
