@@ -41,13 +41,19 @@ static net_err_t do_netif_in (exmsg_t * msg)
     {
         debug_info(DEBUG_MSG, "recv a packet");
 
-        pktbuf_fill(buf, 0x11, 6);
-        net_err_t err = netif_out(netif, (ipaddr_t *)0, buf);
-        if (err < 0)
+        if (netif->link_layer)
+        {
+            net_err_t err = netif->link_layer->in(netif, buf);
+            if (err < 0)
+            {
+                pktbuf_free(buf);
+                debug_warn(DEBUG_MSG, "netif in failed, error=%d", err);
+            }
+        }
+        else
         {
             pktbuf_free(buf);
         }
-        //#todo handle msg
     }
     return NET_ERR_OK;
 }
