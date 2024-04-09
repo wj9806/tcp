@@ -53,6 +53,9 @@ net_err_t netdev_init()
     netif_set_addr(netif, &ip, &mask, &gw);
     netif_set_active(netif);
 
+    pktbuf_t * buf = pktbuf_alloc(32);
+    pktbuf_fill(buf, 0x53, 32);
+    netif_out(netif, (ipaddr_t *)0, buf);
     return NET_ERR_OK;
 }
 

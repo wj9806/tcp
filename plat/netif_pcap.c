@@ -57,6 +57,7 @@ void xmit_thread (void * arg)
         int total_size = buf->total_size;
         pktbuf_read(buf, rw_buffer, total_size);
         pktbuf_free(buf);
+        //send net data packet to dest
         if (pcap_inject(pcap, rw_buffer, total_size) == -1)
         {
             debug_error(DEBUG_NETIF, "pcap send failed, size:%d err:%s\n", total_size, pcap_geterr(pcap));

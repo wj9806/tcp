@@ -7,8 +7,10 @@
 
 #include <stdint.h>
 #include "net_err.h"
+#include "netif.h"
 
 #define ETHER_HWA_SIZE          6
+#define ETHER_DATA_MIN          46
 #define ETHER_MTU               1500
 
 #pragma pack(1)
@@ -30,5 +32,9 @@ typedef struct {
 #pragma pack()
 
 net_err_t ether_init();
+
+const uint8_t * ether_broadcast_addr(void);
+
+net_err_t ether_raw_out(netif_t * netif, uint16_t protocol, const uint8_t * dest, pktbuf_t * buf);
 
 #endif //NET_ETHER_H

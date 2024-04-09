@@ -5,6 +5,8 @@
 #include "mblock.h"
 #include "pktbuf.h"
 #include "exmsg.h"
+#include "protocol.h"
+#include "ether.h"
 
 static netif_t netif_buffer[NETIF_DEV_CNT];
 static mblock_t netif_block;
@@ -333,12 +335,24 @@ pktbuf_t * netif_get_out(netif_t * netif, int tmo)
 
 net_err_t netif_out(netif_t * netif, ipaddr_t * ipaddr, pktbuf_t * buf)
 {
-    net_err_t err = netif_put_out(netif, buf, -1);
-    if (err < 0)
+    if (netif->link_layer)
     {
-        debug_error(DEBUG_NETIF, "send failed");
-        return err;
+        net_err_t err = ether_raw_out(netif, NET_PROTOCOL_ARP, ether_broadcast_addr(), buf);
+        if (err < 0)
+        {
+            debug_warn(DEBUG_NETIF, "netif link out err");
+            return err;
+        }
+        return NET_ERR_OK;
     }
-    pktbuf_inc_ref(buf);
-    return netif->ops->xmit(netif);
+    else
+    {
+        net_err_t err = netif_put_out(netif, buf, -1);
+        if (err < 0)
+        {
+            debug_error(DEBUG_NETIF, "send failed");
+            return err;
+        }
+        return netif->ops->xmit(netif);
+    }
 }
