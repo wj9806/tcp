@@ -31,10 +31,19 @@ typedef struct {
 } ether_pkt_t;
 #pragma pack()
 
+/**
+ * ethernet init
+ */
 net_err_t ether_init();
 
+/**
+ * get ethernet broadcast addr
+ */
 const uint8_t * ether_broadcast_addr(void);
 
+/**
+ * send ethernet data packet to dest addr
+ */
 net_err_t ether_raw_out(netif_t * netif, uint16_t protocol, const uint8_t * dest, pktbuf_t * buf);
 
 #endif //NET_ETHER_H

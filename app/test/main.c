@@ -6,6 +6,7 @@
 #include "mblock.h"
 #include "pktbuf.h"
 #include "netif.h"
+#include "timer.h"
 
 #define DEBUG_TEST    DEBUG_LEVEL_INFO
 
@@ -198,8 +199,42 @@ void pktbuf_test()
     pktbuf_free(buf);
 }
 
+void timer0_proc(struct net_timer_t * timer, void * arg)
+{
+    static int count = 1;
+    printf("this is %s: %d\n", timer->name, count);
+}
+
+void timer1_proc(struct net_timer_t * timer, void * arg)
+{
+    static int count = 1;
+    printf("this is %s: %d\n", timer->name, count++);
+}
+
+void timer2_proc(struct net_timer_t * timer, void * arg)
+{
+    static int count = 1;
+    printf("this is %s: %d\n", timer->name, count++);
+}
+
+void timer3_proc(struct net_timer_t * timer, void * arg)
+{
+    static int count = 1;
+    printf("this is %s: %d\n", timer->name, count++);
+}
+
+void timer_test()
+{
+    static net_timer_t t0, t1, t2, t3;
+    net_timer_add(&t0, "t0", timer0_proc, (void *)0, 200, 0);
+    net_timer_add(&t1, "t1", timer1_proc, (void *)0, 1000, NET_TIMER_RELOAD);
+    net_timer_add(&t2, "t2", timer2_proc, (void *)0, 1000, NET_TIMER_RELOAD);
+    net_timer_add(&t3, "t3", timer3_proc, (void *)0, 2000, NET_TIMER_RELOAD);
+}
+
 void test()
 {
+#ifdef TEST
     debug_info(DEBUG_TEST, "hello");
     debug_warn(DEBUG_TEST, "hello");
     debug_error(DEBUG_TEST, "hello");
@@ -209,7 +244,8 @@ void test()
     mblock_test();
     pktbuf_test();
     //netif_t * netif = netif_open("pcap");
-
+#endif
+    timer_test();
 }
 
 int main()
@@ -217,9 +253,7 @@ int main()
     net_init();
     netdev_init();
     net_start();
-#ifdef TEST
     test();
-#endif
     for(;;)
     {
         sys_sleep(10);

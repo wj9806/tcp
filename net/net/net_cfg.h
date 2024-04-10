@@ -16,6 +16,7 @@
 #define DEBUG_NETIF             DEBUG_LEVEL_INFO
 #define DEBUG_ETHER             DEBUG_LEVEL_INFO
 #define DEBUG_TOOLS             DEBUG_LEVEL_INFO
+#define DEBUG_TIMER             DEBUG_LEVEL_INFO
 
 
 #define EXMSG_MSG_CNT           10
@@ -30,6 +31,8 @@
 #define NETIF_INQ_SIZE          50
 #define NETIF_OUTQ_SIZE         50
 #define NETIF_DEV_CNT           10
+
+#define TIMER_NAME_SIZE         32
 
 #define NET_ENDIAN_LITTLE       1
 
