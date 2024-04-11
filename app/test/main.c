@@ -227,9 +227,11 @@ void timer_test()
 {
     static net_timer_t t0, t1, t2, t3;
     net_timer_add(&t0, "t0", timer0_proc, (void *)0, 200, 0);
+    net_timer_add(&t3, "t3", timer3_proc, (void *)0, 4000, NET_TIMER_RELOAD);
     net_timer_add(&t1, "t1", timer1_proc, (void *)0, 1000, NET_TIMER_RELOAD);
     net_timer_add(&t2, "t2", timer2_proc, (void *)0, 1000, NET_TIMER_RELOAD);
-    net_timer_add(&t3, "t3", timer3_proc, (void *)0, 2000, NET_TIMER_RELOAD);
+
+    net_timer_remove(&t2);
 }
 
 void test()
