@@ -99,6 +99,55 @@ void net_timer_remove(net_timer_t * timer)
         break;
     }
 
-
     display_timer_list();
+}
+
+net_err_t net_timer_check_tmo(int diff_ms)
+{
+    list_t wait_list;
+    list_init(&wait_list);
+
+    node_t * node = list_first(&timer_list);
+    while (node)
+    {
+        node_t * next = list_node_next(node);
+        net_timer_t * timer = list_node_parent(node, net_timer_t , node);
+        if (timer->curr > diff_ms)
+        {
+            timer->curr -= diff_ms;
+            break;
+        }
+        diff_ms -= timer->curr;
+        timer->curr = 0;
+        list_remove(&timer_list, &timer->node);
+        list_insert_last(&wait_list, &timer->node);
+
+        node = next;
+    }
+
+    while ((node = list_remove_first(&wait_list)) != (node_t *) 0)
+    {
+        net_timer_t * timer = list_node_parent(node, net_timer_t , node);
+        if (timer)
+        {
+            timer->proc(timer, timer->arg);
+            if (timer->flags & NET_TIMER_RELOAD)
+            {
+                timer->curr = timer->reload;
+                insert_timer(timer);
+            }
+        }
+    }
+    return NET_ERR_OK;
+}
+
+int net_timer_first_tmo(void)
+{
+    node_t * node = list_first(&timer_list);
+    if (node)
+    {
+        net_timer_t * timer = list_node_parent(node, net_timer_t , node);
+        return timer->curr;
+    }
+    return 0;
 }

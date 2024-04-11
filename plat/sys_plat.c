@@ -167,7 +167,8 @@ int load_pcap_lib() {
 /**
  * @brief 获取当前时间
  */
-void sys_time_curr (net_time_t * time) {
+void sys_time_curr (net_time_t * time)
+{
     // https://learn.microsoft.com/zh-cn/windows/win32/api/sysinfoapi/nf-sysinfoapi-gettickcount?redirectedfrom=MSDN
     *time = GetTickCount();     // 自系统启动以来已用过的毫秒数
 }
@@ -177,7 +178,8 @@ void sys_time_curr (net_time_t * time) {
  * 
  * 第一次调用时，返回的时间差值无效
  */
-int sys_time_goes (net_time_t * pre) {
+int sys_time_goes (net_time_t * pre)
+{
     // 获取当前时间
     net_time_t curr = GetTickCount();
 
@@ -199,7 +201,7 @@ void sys_sem_free(sys_sem_t sem) {
 
 int sys_sem_wait(sys_sem_t sem, uint32_t tmo_ms) {
     DWORD tmo = (tmo_ms == 0) ? INFINITE : tmo_ms;
-    DWORD  err = WaitForSingleObject(sem, tmo);
+    DWORD err = WaitForSingleObject(sem, tmo);
     if (err == WAIT_OBJECT_0) {
         return 0;
     }

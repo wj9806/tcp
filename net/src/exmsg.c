@@ -6,6 +6,7 @@
 #include "fixq.h"
 #include "debug.h"
 #include "mblock.h"
+#include "timer.h"
 
 static void * msg_tbl[EXMSG_MSG_CNT];
 static fixq_t msg_queue;
@@ -61,11 +62,13 @@ static net_err_t do_netif_in (exmsg_t * msg)
 static void work_thread(void * arg)
 {
     debug_info(DEBUG_MSG, "exmsg is running");
-
+    net_time_t time;
+    sys_time_curr(&time);
     while (1)
     {
-        exmsg_t * msg = (exmsg_t *) fixq_recv(&msg_queue, 0);
-        if (msg != (exmsg_t *)0) {
+        int first_time = net_timer_first_tmo();
+        exmsg_t * msg = (exmsg_t *) fixq_recv(&msg_queue, first_time);
+        if (msg) {
             debug_info(DEBUG_MSG, "recv a msg");
 
             switch (msg->type) {
@@ -78,6 +81,8 @@ static void work_thread(void * arg)
 
             mblock_free(&msg_block, msg);
         }
+        int diff_ms = sys_time_goes(&time);
+        net_timer_check_tmo(diff_ms);
     }
 }
 

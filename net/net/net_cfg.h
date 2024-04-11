@@ -16,7 +16,7 @@
 #define DEBUG_NETIF             DEBUG_LEVEL_INFO
 #define DEBUG_ETHER             DEBUG_LEVEL_INFO
 #define DEBUG_TOOLS             DEBUG_LEVEL_INFO
-#define DEBUG_TIMER             DEBUG_LEVEL_INFO
+#define DEBUG_TIMER             DEBUG_LEVEL_NONE
 
 
 #define EXMSG_MSG_CNT           10
