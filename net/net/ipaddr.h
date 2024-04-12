@@ -41,4 +41,12 @@ void ipaddr_copy(ipaddr_t * dest, const ipaddr_t * src);
  */
 ipaddr_t * ipaddr_get_any(void);
 
+/**
+ * @return ip1 is equal ip2
+ */
+inline int ipaddr_is_equal(ipaddr_t * ip1, ipaddr_t * ip2)
+{
+    return ip1->q_addr == ip2->q_addr;
+}
+
 #endif //NET_IPADDR_H

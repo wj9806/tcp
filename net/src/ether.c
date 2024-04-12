@@ -76,6 +76,10 @@ net_err_t ether_in(struct netif_t * netif, pktbuf_t * buf)
 
 net_err_t ether_out(struct netif_t * netif, ipaddr_t * dest, pktbuf_t * buf)
 {
+    if(ipaddr_is_equal(&netif->ipaddr, dest))
+    {
+        return ether_raw_out(netif, NET_PROTOCOL_IPV4, netif->hwaddr.addr, buf);
+    }
     return NET_ERR_OK;
 }
 
