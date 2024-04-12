@@ -17,6 +17,7 @@
 #define DEBUG_ETHER             DEBUG_LEVEL_INFO
 #define DEBUG_TOOLS             DEBUG_LEVEL_INFO
 #define DEBUG_TIMER             DEBUG_LEVEL_NONE
+#define DEBUG_ARP               DEBUG_LEVEL_INFO
 
 
 #define EXMSG_MSG_CNT           10
@@ -35,5 +36,7 @@
 #define TIMER_NAME_SIZE         32
 
 #define NET_ENDIAN_LITTLE       1
+
+#define ARP_TABLE_SIZE          50
 
 #endif //NET_NET_CFG_H

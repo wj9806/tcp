@@ -7,6 +7,7 @@
 #include "ether.h"
 #include "tools.h"
 #include "timer.h"
+#include "arp.h"
 
 net_err_t net_init(void)
 {
@@ -19,6 +20,7 @@ net_err_t net_init(void)
     net_timer_init();
     loop_init();
     ether_init();
+    arp_init();
     return NET_ERR_OK;
 }
 
