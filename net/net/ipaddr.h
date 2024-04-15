@@ -49,4 +49,9 @@ inline int ipaddr_is_equal(ipaddr_t * ip1, ipaddr_t * ip2)
     return ip1->q_addr == ip2->q_addr;
 }
 
+/**
+ * write ipaddr into buf
+ */
+void ipaddr_to_buf(const ipaddr_t * src, uint8_t * in_buf);
+
 #endif //NET_IPADDR_H

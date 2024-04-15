@@ -57,7 +57,7 @@ net_err_t netdev_init()
     pktbuf_t * buf = pktbuf_alloc(32);
     pktbuf_fill(buf, 0x53, 32);
     ipaddr_t addr;
-    ipaddr_from_str(&addr, netdev0_ip);
+    ipaddr_from_str(&addr, friend0_ip);
     netif_out(netif, &addr, buf);
     return NET_ERR_OK;
 }

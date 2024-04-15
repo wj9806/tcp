@@ -8,6 +8,7 @@
 #include "debug.h"
 #include "tools.h"
 #include "protocol.h"
+#include "arp.h"
 
 static net_err_t is_pkt_ok(ether_pkt_t * pkt, int size)
 {
@@ -80,6 +81,8 @@ net_err_t ether_out(struct netif_t * netif, ipaddr_t * dest, pktbuf_t * buf)
     {
         return ether_raw_out(netif, NET_PROTOCOL_IPV4, netif->hwaddr.addr, buf);
     }
+
+    arp_make_request(netif, dest);
     return NET_ERR_OK;
 }
 

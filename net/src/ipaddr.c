@@ -41,3 +41,8 @@ net_err_t ipaddr_from_str(ipaddr_t * dest, const char * str)
     *p = sub_addr;
     return NET_ERR_OK;
 }
+
+void ipaddr_to_buf(const ipaddr_t * src, uint8_t * in_buf)
+{
+    *(uint32_t*)in_buf = src->q_addr;
+}
