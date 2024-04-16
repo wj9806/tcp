@@ -50,4 +50,7 @@ net_err_t arp_init();
 //send a arp request
 net_err_t arp_make_request(netif_t * netif, const ipaddr_t * dest);
 
+//send a gratuitous arp request
+net_err_t arp_make_gratuitous(netif_t * netif);
+
 #endif //NET_ARP_H

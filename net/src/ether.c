@@ -50,7 +50,7 @@ static void display_ether_pkt(char * msg, ether_pkt_t * pkt, int total_size)
 
 net_err_t ether_open(struct netif_t * netif)
 {
-    return NET_ERR_OK;
+    return arp_make_gratuitous(netif);
 }
 
 void ether_close(struct netif_t * netif)
