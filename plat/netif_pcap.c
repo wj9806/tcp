@@ -15,6 +15,7 @@ void recv_thread (void * arg)
     {
         struct pcap_pkthdr * pkthdr;
         const uint8_t * pkt_data;
+        //catch data packet
         if (pcap_next_ex(pcap, &pkthdr, &pkt_data) != 1)
         {
             continue;

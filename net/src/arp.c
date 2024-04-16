@@ -96,6 +96,21 @@ net_err_t arp_make_gratuitous(netif_t * netif)
     return arp_make_request(netif, &netif->ipaddr);
 }
 
+net_err_t arp_make_reply(netif_t * netif, pktbuf_t * buf)
+{
+    arp_pkt_t * arp_packet = (arp_pkt_t *) pktbuf_data(buf);
+    arp_packet->opcode = x_htons(ARP_REPLY);
+
+    plat_memcpy(arp_packet->target_hwaddr, arp_packet->sender_hwaddr, ETHER_HWA_SIZE);
+    plat_memcpy(arp_packet->target_paddr, arp_packet->sender_paddr, IPV4_ADDR_SIZE);
+
+    plat_memcpy(arp_packet->sender_hwaddr, netif->hwaddr.addr, ETHER_HWA_SIZE);
+    ipaddr_to_buf(&netif->ipaddr, arp_packet->sender_paddr);
+
+    return ether_raw_out(netif, NET_PROTOCOL_ARP, arp_packet->target_hwaddr, buf);
+}
+
+
 net_err_t arp_in(netif_t * netif, pktbuf_t * buf)
 {
     debug_info(DEBUG_ARP, "arp in");
@@ -110,7 +125,11 @@ net_err_t arp_in(netif_t * netif, pktbuf_t * buf)
     {
         return err;
     }
-
+    if (x_ntohs(arp_packet->opcode) == ARP_REQUEST)
+    {
+        debug_info(DEBUG_ARP, "arp request, send reply");
+        return arp_make_reply(netif, buf);
+    }
     pktbuf_free(buf);
     return NET_ERR_OK;
 }
