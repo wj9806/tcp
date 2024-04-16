@@ -40,6 +40,8 @@ typedef struct {
         NET_ARP_WAITING,
         NET_ARP_RESOLVED
     } state;
+    int tmo;
+    int retry;
     node_t node;
     list_t buf_list;
     netif_t * netif;

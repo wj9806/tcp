@@ -23,6 +23,7 @@ void debug_print(int module, int level, const char * file, const char * func, in
 
 void debug_dump_hwaddr(const char * msg, const uint8_t * hwaddr, int len);
 void debug_dump_ip(const char * msg, ipaddr_t * ipaddr);
+void debug_dump_ip_buf(const char * msg, uint8_t * ipaddr);
 
 #define debug_info(module, fmt, ...)  debug_print(module, DEBUG_LEVEL_INFO, __FILE__, __FUNCTION__, __LINE__, fmt, ##__VA_ARGS__)
 #define debug_warn(module, fmt, ...)  debug_print(module, DEBUG_LEVEL_WARN, __FILE__, __FUNCTION__, __LINE__, fmt, ##__VA_ARGS__)

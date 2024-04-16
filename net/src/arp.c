@@ -11,6 +11,65 @@ static arp_entry_t cache_tbl[ARP_TABLE_SIZE];
 static mblock_t cache_block;
 static list_t cache_list;
 
+#if DEBUG_DISP_ENABLED(DEBUG_ARP)
+static void arp_pkt_display(arp_pkt_t * packet)
+{
+    uint16_t opcode = x_ntohs(packet->opcode);
+    plat_printf("-----------arp packet--------------\n");
+    plat_printf("   htype:%d\n", x_ntohs(packet->htype));
+    plat_printf("   ptype:%04x\n", x_ntohs(packet->ptype));
+    plat_printf("   hwlen:%d\n", packet->hwlen);
+    plat_printf("   plen:%d\n", packet->plen);
+    plat_printf("   type:%d\n", opcode);
+
+    switch (opcode) {
+        case ARP_REQUEST:
+            plat_printf("request\n");
+            break;
+        case ARP_REPLY:
+            plat_printf("reply\n");
+            break;
+        default:
+            plat_printf("unknown\n");
+    }
+
+    debug_dump_ip_buf("     sender:", packet->sender_paddr);
+    debug_dump_hwaddr("     mac:", packet->sender_hwaddr, ETHER_HWA_SIZE);
+    debug_dump_ip_buf("\n     target:", packet->target_paddr);
+    debug_dump_hwaddr("     mac:", packet->target_hwaddr, ETHER_HWA_SIZE);
+    plat_printf("\n");
+}
+
+static void display_arp_entry(arp_entry_t * entry)
+{
+    plat_printf("%d: ", (int)(entry - cache_tbl));
+    debug_dump_ip_buf(" ip: ", entry->paddr);
+    debug_dump_hwaddr(" mac: ", entry->hwaddr, ETHER_HWA_SIZE);
+
+    plat_printf("tmo: %d, retry: %d, %s, buf: %d\n",
+                entry->tmo, entry->retry, entry->state == NET_ARP_RESOLVED ? "stable" : "pending", list_count(&entry->buf_list));
+}
+
+static void display_arp_tbl(void)
+{
+    plat_printf("-----------arp table--------------\n");
+    arp_entry_t * entry = cache_tbl;
+
+    for (int i = 0; i < ARP_TABLE_SIZE; ++i) {
+        if (entry->state != NET_ARP_FREE)
+        {
+            continue;
+        }
+
+        display_arp_entry(entry);
+    }
+}
+
+#else
+#define arp_pkt_display(packet)
+#define display_arp_tbl()
+#endif
+
 static net_err_t arp_cache_init(void)
 {
     list_init(&cache_list);
@@ -83,6 +142,7 @@ net_err_t arp_make_request(netif_t * netif, const ipaddr_t * dest)
     plat_memset(arp_pkt->target_hwaddr, 0, ETHER_HWA_SIZE);
     ipaddr_to_buf(dest, arp_pkt->target_paddr);
 
+    arp_pkt_display(arp_pkt);
     net_err_t err = ether_raw_out(netif, NET_PROTOCOL_ARP, ether_broadcast_addr(), buf);
     if (err < 0)
     {
@@ -106,7 +166,7 @@ net_err_t arp_make_reply(netif_t * netif, pktbuf_t * buf)
 
     plat_memcpy(arp_packet->sender_hwaddr, netif->hwaddr.addr, ETHER_HWA_SIZE);
     ipaddr_to_buf(&netif->ipaddr, arp_packet->sender_paddr);
-
+    arp_pkt_display(arp_packet);
     return ether_raw_out(netif, NET_PROTOCOL_ARP, arp_packet->target_hwaddr, buf);
 }
 

@@ -248,8 +248,9 @@ void test()
     mblock_test();
     pktbuf_test();
     //netif_t * netif = netif_open("pcap");
-#endif
     timer_test();
+#endif
+
 }
 
 int main()

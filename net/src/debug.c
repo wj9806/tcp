@@ -96,3 +96,20 @@ void debug_dump_ip(const char * msg, ipaddr_t * ipaddr)
         plat_printf("0.0.0.0");
     }
 }
+
+void debug_dump_ip_buf(const char * msg, uint8_t * ipaddr)
+{
+    if (msg)
+    {
+        plat_printf("%s", msg);
+    }
+
+    if (ipaddr)
+    {
+        plat_printf("%d.%d.%d.%d", ipaddr[0], ipaddr[1], ipaddr[2], ipaddr[3]);
+    }
+    else
+    {
+        plat_printf("0.0.0.0");
+    }
+}

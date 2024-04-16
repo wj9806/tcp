@@ -7,16 +7,16 @@
 
 #include "debug.h"
 
-#define DEBUG_MBLOCK            DEBUG_LEVEL_INFO
-#define DEBUG_QUEUE             DEBUG_LEVEL_INFO
-#define DEBUG_MSG               DEBUG_LEVEL_INFO
-#define DEBUG_PKTBUF            DEBUG_LEVEL_INFO
-#define DEBUG_INIT              DEBUG_LEVEL_INFO
-#define DEBUG_PLAT              DEBUG_LEVEL_INFO
-#define DEBUG_NETIF             DEBUG_LEVEL_INFO
-#define DEBUG_ETHER             DEBUG_LEVEL_INFO
-#define DEBUG_TOOLS             DEBUG_LEVEL_INFO
-#define DEBUG_TIMER             DEBUG_LEVEL_NONE
+#define DEBUG_MBLOCK            DEBUG_LEVEL_ERROR
+#define DEBUG_QUEUE             DEBUG_LEVEL_ERROR
+#define DEBUG_MSG               DEBUG_LEVEL_ERROR
+#define DEBUG_PKTBUF            DEBUG_LEVEL_ERROR
+#define DEBUG_INIT              DEBUG_LEVEL_ERROR
+#define DEBUG_PLAT              DEBUG_LEVEL_ERROR
+#define DEBUG_NETIF             DEBUG_LEVEL_ERROR
+#define DEBUG_ETHER             DEBUG_LEVEL_ERROR
+#define DEBUG_TOOLS             DEBUG_LEVEL_ERROR
+#define DEBUG_TIMER             DEBUG_LEVEL_ERROR
 #define DEBUG_ARP               DEBUG_LEVEL_INFO
 
 
