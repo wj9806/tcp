@@ -71,6 +71,20 @@ net_err_t ether_in(struct netif_t * netif, pktbuf_t * buf)
         return err;
     }
     display_ether_pkt("ether in", pkt, buf->total_size);
+    switch (x_ntohs(pkt->hdr.protocol)) {
+        case NET_PROTOCOL_ARP:
+            err = pktbuf_remove_header(buf, sizeof(ether_hdr_t));
+            if (err < 0)
+            {
+                debug_error(DEBUG_ETHER, "remove header failed");
+                return NET_ERR_SIZE;
+            }
+            return arp_in(netif, buf);
+            break;
+        default:
+            debug_warn(DEBUG_ETHER, "unknown packet");
+            return NET_ERR_NOT_SUPPORT;
+    }
     pktbuf_free(buf);
     return NET_ERR_OK;
 }
