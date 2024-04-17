@@ -10,6 +10,7 @@
 static arp_entry_t cache_tbl[ARP_TABLE_SIZE];
 static mblock_t cache_block;
 static list_t cache_list;
+static uint8_t empty_hwaddr[] = {0, 0, 0, 0, 0, 0};
 
 #if DEBUG_DISP_ENABLED(DEBUG_ARP)
 static void arp_pkt_display(arp_pkt_t * packet)
@@ -46,7 +47,7 @@ static void display_arp_entry(arp_entry_t * entry)
     debug_dump_ip_buf(" ip: ", entry->paddr);
     debug_dump_hwaddr(" mac: ", entry->hwaddr, ETHER_HWA_SIZE);
 
-    plat_printf("tmo: %d, retry: %d, %s, buf: %d\n",
+    plat_printf("  tmo: %d, retry: %d, %s, buf: %d\n",
                 entry->tmo, entry->retry, entry->state == NET_ARP_RESOLVED ? "stable" : "pending", list_count(&entry->buf_list));
 }
 
@@ -55,8 +56,8 @@ static void display_arp_tbl(void)
     plat_printf("-----------arp table--------------\n");
     arp_entry_t * entry = cache_tbl;
 
-    for (int i = 0; i < ARP_TABLE_SIZE; ++i) {
-        if (entry->state != NET_ARP_FREE)
+    for (int i = 0; i < ARP_TABLE_SIZE; ++i, entry++) {
+        if ((entry->state != NET_ARP_WAITING) && (entry->state != NET_ARP_RESOLVED))
         {
             continue;
         }
@@ -80,6 +81,136 @@ static net_err_t arp_cache_init(void)
     }
     return NET_ERR_OK;
 }
+
+/**
+ * clear entry's buffer
+ */
+static void cache_clear_all(arp_entry_t * entry)
+{
+    node_t * first;
+    while ((first = list_remove_first(&entry->buf_list)))
+    {
+        pktbuf_t * buf = list_node_parent(first, pktbuf_t, node);
+        pktbuf_free(buf);
+    }
+}
+
+static net_err_t cache_send_all(arp_entry_t * entry)
+{
+    node_t * first;
+    while ((first = list_remove_first(&entry->buf_list)))
+    {
+        pktbuf_t * buf = list_node_parent(first, pktbuf_t, node);
+
+        net_err_t err = ether_raw_out(entry->netif, NET_PROTOCOL_IPV4, entry->hwaddr, buf);
+        if (err < 0)
+        {
+            pktbuf_free(buf);
+        }
+    }
+    return NET_ERR_OK;
+}
+
+static arp_entry_t * cache_alloc(int force)
+{
+    arp_entry_t * entry = mblock_alloc(&cache_block, -1);
+    if (!entry && force)
+    {
+        node_t * node = list_remove_first(&cache_list);
+        if (!node)
+        {
+            debug_warn(DEBUG_ARP, "alloc arp entry failed");
+            return (arp_entry_t *)0;
+        }
+        entry = list_node_parent(node, arp_entry_t, node);
+        cache_clear_all(entry);
+    }
+
+    if (entry)
+    {
+        plat_memset(entry, 0, sizeof(arp_entry_t));
+        entry->state = NET_ARP_FREE;
+        node_init(&entry->node);
+        list_init(&entry->buf_list);
+    }
+
+    return entry;
+}
+
+/**
+ * free the given arp_entry_t
+ */
+static void cache_free(arp_entry_t * entry)
+{
+    cache_clear_all(entry);
+    list_remove(&cache_list, &entry->node);
+    mblock_free(&cache_block, entry);
+}
+
+static arp_entry_t * cache_find(uint8_t * ip)
+{
+    node_t * node;
+    list_for_each(node, &cache_list)
+    {
+        arp_entry_t * entry = list_node_parent(node, arp_entry_t, node);
+        if (plat_memcmp(ip, entry->paddr, IPV4_ADDR_SIZE) == 0)
+        {
+            list_remove(&cache_list, &entry->node);
+            list_insert_first(&cache_list, &entry->node);
+            return entry;
+        }
+    }
+    return (arp_entry_t *)0;
+}
+
+static void cache_entry_set(arp_entry_t * entry, uint8_t * hwaddr, uint8_t * ip, netif_t * netif, int state)
+{
+    plat_memcpy(entry->hwaddr, hwaddr, ETHER_HWA_SIZE);
+    plat_memcpy(entry->paddr, ip, IPV4_ADDR_SIZE);
+    entry->state = state;
+    entry->netif = netif;
+    entry->tmo = 0;
+    entry->retry = 0;
+}
+
+static net_err_t cache_insert(netif_t * netif, uint8_t * ip, uint8_t * hwaddr, int force)
+{
+    if (*(uint32_t*)ip == 0)
+    {
+        return NET_ERR_NOT_SUPPORT;
+    }
+    arp_entry_t * entry = cache_find(ip);
+    if (!entry)
+    {
+        entry = cache_alloc(force);
+        if (!entry)
+        {
+            debug_dump_ip_buf("alloc failed. ip:", ip);
+            return NET_ERR_NONE;
+        }
+        cache_entry_set(entry, hwaddr, ip, netif, NET_ARP_RESOLVED);
+        list_insert_first(&cache_list, &entry->node);
+    }
+    else
+    {
+        cache_entry_set(entry, hwaddr, ip, netif, NET_ARP_RESOLVED);
+        if (list_first(&cache_list) != &entry->node)
+        {
+            list_remove(&cache_list, &entry->node);
+            list_insert_first(&cache_list, &entry->node);
+        }
+
+        net_err_t err = cache_send_all(entry);
+        if (err < 0)
+        {
+            debug_error(DEBUG_ARP, "send arp packet failed.");
+            return err;
+        }
+    }
+    display_arp_tbl();
+    return NET_ERR_OK;
+}
+
 
 static net_err_t is_pkt_ok(arp_pkt_t * arp_packet, uint16_t size, netif_t * netif)
 {
@@ -185,11 +316,70 @@ net_err_t arp_in(netif_t * netif, pktbuf_t * buf)
     {
         return err;
     }
-    if (x_ntohs(arp_packet->opcode) == ARP_REQUEST)
+    arp_pkt_display(arp_packet);
+
+    ipaddr_t target_ip;
+    ipaddr_from_buf(&target_ip, arp_packet->target_paddr);
+    if (ipaddr_is_equal(&netif->ipaddr, &target_ip))
     {
-        debug_info(DEBUG_ARP, "arp request, send reply");
-        return arp_make_reply(netif, buf);
+        cache_insert(netif, arp_packet->sender_paddr, arp_packet->sender_hwaddr, 1);
+
+        if (x_ntohs(arp_packet->opcode) == ARP_REQUEST)
+        {
+            debug_info(DEBUG_ARP, "arp request, send reply");
+            return arp_make_reply(netif, buf);
+        }
     }
+    else
+    {
+        //handle gratuitous arp request
+        cache_insert(netif, arp_packet->sender_paddr, arp_packet->sender_hwaddr, 0);
+    }
+
     pktbuf_free(buf);
     return NET_ERR_OK;
+}
+
+net_err_t arp_resolve(netif_t * netif, const ipaddr_t * ipaddr, pktbuf_t * buf)
+{
+    uint8_t ip_buf[IPV4_ADDR_SIZE];
+    ipaddr_to_buf(ipaddr, ip_buf);
+
+    arp_entry_t * entry = cache_find((uint8_t *)ip_buf);
+    if (entry)
+    {
+        debug_info(DEBUG_ARP, "find an arp entry");
+
+        if (entry->state == NET_ARP_RESOLVED)
+        {
+            return ether_raw_out(netif, NET_PROTOCOL_IPV4, entry->hwaddr, buf);
+        }
+
+        if (list_count(&entry->buf_list) < ARP_MAX_PKT_WAIT)
+        {
+            list_insert_last(&entry->buf_list, &buf->node);
+            return NET_ERR_OK;
+        }
+        else
+        {
+            debug_warn(DEBUG_ARP, "too many pkt");
+            return NET_ERR_FULL;
+        }
+    }
+    else
+    {
+        debug_info(DEBUG_ARP, "make arp request");
+        entry = cache_alloc(1);
+        if (entry == (arp_entry_t *)0)
+        {
+            debug_error(DEBUG_ARP, "alloc arp failed");
+            return NET_ERR_NONE;
+        }
+        cache_entry_set(entry, empty_hwaddr, (uint8_t *) ip_buf, netif, NET_ARP_WAITING);
+        list_insert_first(&cache_list, &entry->node);
+        list_insert_last(&entry->buf_list, &buf->node);
+        display_arp_tbl();
+
+        return arp_make_request(netif, ipaddr);
+    }
 }

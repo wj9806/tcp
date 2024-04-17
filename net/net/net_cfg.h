@@ -38,5 +38,6 @@
 #define NET_ENDIAN_LITTLE       1
 
 #define ARP_TABLE_SIZE          50
+#define ARP_MAX_PKT_WAIT        5
 
 #endif //NET_NET_CFG_H

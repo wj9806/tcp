@@ -95,9 +95,7 @@ net_err_t ether_out(struct netif_t * netif, ipaddr_t * dest, pktbuf_t * buf)
     {
         return ether_raw_out(netif, NET_PROTOCOL_IPV4, netif->hwaddr.addr, buf);
     }
-
-    arp_make_request(netif, dest);
-    return NET_ERR_OK;
+    return arp_resolve(netif, dest, buf);
 }
 
 net_err_t ether_init()

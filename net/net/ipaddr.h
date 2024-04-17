@@ -54,4 +54,9 @@ inline int ipaddr_is_equal(ipaddr_t * ip1, ipaddr_t * ip2)
  */
 void ipaddr_to_buf(const ipaddr_t * src, uint8_t * in_buf);
 
+/**
+ * convert ip_buf to ipaddr
+ */
+void ipaddr_from_buf(ipaddr_t * dest, const uint8_t * ip_buf);
+
 #endif //NET_IPADDR_H

@@ -49,15 +49,25 @@ typedef struct {
 
 net_err_t arp_init();
 
-//send a arp request
+/**
+ * send a arp request
+ */
 net_err_t arp_make_request(netif_t * netif, const ipaddr_t * dest);
 
-//send a gratuitous arp request
+/**
+ * send a gratuitous arp request
+ */
 net_err_t arp_make_gratuitous(netif_t * netif);
 
 /**
  * arp input data packet handle
  */
 net_err_t arp_in(netif_t * netif, pktbuf_t * buf);
+
+/**
+ * When an IP packet needs to be sent, it is first looked up from the ARP cache, and if it is found, it is updated with the value in it.
+ * If not, a query request is sent, and the packet is added to the waiting queue for the next request before sending the packet.
+ */
+net_err_t arp_resolve(netif_t * netif, const ipaddr_t * ipaddr, pktbuf_t * buf);
 
 #endif //NET_ARP_H
