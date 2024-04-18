@@ -445,3 +445,31 @@ net_err_t arp_resolve(netif_t * netif, const ipaddr_t * ipaddr, pktbuf_t * buf)
         return arp_make_request(netif, ipaddr);
     }
 }
+
+void arp_clear(netif_t * netif)
+{
+    node_t * node, * next;
+    for (node = list_first(&cache_list); node; node = next)
+    {
+        next = list_node_next(node);
+        arp_entry_t * entry = list_node_parent(node, arp_entry_t, node);
+        if (entry->netif == netif)
+        {
+            list_remove(&cache_list, node);
+        }
+    }
+}
+
+const uint8_t * arp_find(netif_t * netif, ipaddr_t * ipaddr)
+{
+    if (ipaddr_is_local_broadcast(ipaddr) || ipaddr_is_direct_broadcast(ipaddr, &netif->netmask))
+    {
+        return ether_broadcast_addr();
+    }
+    arp_entry_t * entry = cache_find(ipaddr->addr);
+    if (entry && (entry->state == NET_ARP_RESOLVED))
+    {
+        return entry->hwaddr;
+    }
+    return (const uint8_t *) 0;
+}

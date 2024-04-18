@@ -55,7 +55,7 @@ net_err_t ether_open(struct netif_t * netif)
 
 void ether_close(struct netif_t * netif)
 {
-
+    arp_clear(netif);
 }
 
 net_err_t ether_in(struct netif_t * netif, pktbuf_t * buf)
@@ -95,7 +95,15 @@ net_err_t ether_out(struct netif_t * netif, ipaddr_t * dest, pktbuf_t * buf)
     {
         return ether_raw_out(netif, NET_PROTOCOL_IPV4, netif->hwaddr.addr, buf);
     }
-    return arp_resolve(netif, dest, buf);
+    const uint8_t * hwaddr = arp_find(netif, dest);
+    if (hwaddr)
+    {
+        return ether_raw_out(netif, NET_PROTOCOL_IPV4, hwaddr, buf);
+    }
+    else
+    {
+        return arp_resolve(netif, dest, buf);
+    }
 }
 
 net_err_t ether_init()

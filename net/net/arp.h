@@ -70,4 +70,14 @@ net_err_t arp_in(netif_t * netif, pktbuf_t * buf);
  */
 net_err_t arp_resolve(netif_t * netif, const ipaddr_t * ipaddr, pktbuf_t * buf);
 
+/**
+ *  clear the arp cache of given netif
+ */
+void arp_clear(netif_t * netif);
+
+/**
+ * find hwaddr from arp cache table
+ */
+const uint8_t * arp_find(netif_t * netif, ipaddr_t * ipaddr);
+
 #endif //NET_ARP_H

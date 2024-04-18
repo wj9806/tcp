@@ -59,4 +59,8 @@ void ipaddr_to_buf(const ipaddr_t * src, uint8_t * in_buf);
  */
 void ipaddr_from_buf(ipaddr_t * dest, const uint8_t * ip_buf);
 
+int ipaddr_is_local_broadcast(const ipaddr_t * ipaddr);
+
+int ipaddr_is_direct_broadcast(const ipaddr_t * ipaddr, const ipaddr_t * netmask);
+
 #endif //NET_IPADDR_H
