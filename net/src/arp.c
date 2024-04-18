@@ -6,7 +6,11 @@
 #include "mblock.h"
 #include "tools.h"
 #include "protocol.h"
+#include "timer.h"
 
+#define to_scan_cnt(tmo)    (tmo/ARP_TIMER_TMO)
+
+static net_timer_t cache_timer;
 static arp_entry_t cache_tbl[ARP_TABLE_SIZE];
 static mblock_t cache_block;
 static list_t cache_list;
@@ -169,8 +173,14 @@ static void cache_entry_set(arp_entry_t * entry, uint8_t * hwaddr, uint8_t * ip,
     plat_memcpy(entry->paddr, ip, IPV4_ADDR_SIZE);
     entry->state = state;
     entry->netif = netif;
-    entry->tmo = 0;
-    entry->retry = 0;
+    if (state == NET_ARP_RESOLVED)
+    {
+        entry->tmo = to_scan_cnt(ARP_ENTRY_STABLE_TMO);
+    }
+    else
+    {
+        entry->retry = to_scan_cnt(ARP_ENTRY_PENDING_TMO);
+    }
 }
 
 static net_err_t cache_insert(netif_t * netif, uint8_t * ip, uint8_t * hwaddr, int force)
@@ -238,6 +248,53 @@ static net_err_t is_pkt_ok(arp_pkt_t * arp_packet, uint16_t size, netif_t * neti
     return NET_ERR_OK;
 }
 
+static void arp_cache_tmo(net_timer_t * timer, void * arg)
+{
+    node_t * curr, * next;
+
+    for (curr = cache_list.first; curr; curr = next)
+    {
+        next = list_node_next(curr);
+        arp_entry_t * entry = list_node_parent(curr, arp_entry_t, node);
+        if (--entry->tmo > 0)
+        {
+            continue;
+        }
+
+        switch (entry->state) {
+            case NET_ARP_RESOLVED:
+                display_arp_entry(entry);
+                ipaddr_t ipaddr;
+                ipaddr_from_buf(&ipaddr, entry->paddr);
+                entry->state = NET_ARP_WAITING;
+                entry->tmo = to_scan_cnt(ARP_ENTRY_PENDING_TMO);
+                entry->retry = ARP_ENTRY_RETRY_CNT;
+                arp_make_request(entry->netif, &ipaddr);
+                break;
+            case NET_ARP_WAITING:
+                if (--entry->retry == 0)
+                {
+                    debug_info(DEBUG_ARP, "retry pending >= %d", ARP_ENTRY_PENDING_TMO);
+                    display_arp_entry(entry);
+                    cache_free(entry);
+                }
+                else
+                {
+                    debug_info(DEBUG_ARP, "arp retry pending");
+                    ipaddr_t ipaddr;
+                    ipaddr_from_buf(&ipaddr, entry->paddr);
+                    entry->tmo = to_scan_cnt(ARP_ENTRY_PENDING_TMO);
+                    arp_make_request(entry->netif, &ipaddr);
+                }
+                break;
+            default:
+                debug_error(DEBUG_ARP, "unknown arp state");
+                display_arp_entry(entry);
+                break;
+        }
+    }
+}
+
 net_err_t arp_init()
 {
     debug_info(DEBUG_ARP, "init arp");
@@ -247,7 +304,12 @@ net_err_t arp_init()
         debug_error(DEBUG_ARP, "init arp cache failed");
         return err;
     }
-
+    err = net_timer_add(&cache_timer, "arp-timer", arp_cache_tmo, (void *)0, ARP_TIMER_TMO * 1000, NET_TIMER_RELOAD);
+    if (err < 0)
+    {
+        debug_error(DEBUG_ARP, "create timer error: %d", err);
+        return err;
+    }
     return NET_ERR_OK;
 }
 

@@ -39,5 +39,9 @@
 
 #define ARP_TABLE_SIZE          50
 #define ARP_MAX_PKT_WAIT        5
+#define ARP_TIMER_TMO           1
+#define ARP_ENTRY_PENDING_TMO   3
+#define ARP_ENTRY_RETRY_CNT     5
+#define ARP_ENTRY_STABLE_TMO    5
 
 #endif //NET_NET_CFG_H
