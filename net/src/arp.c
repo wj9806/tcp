@@ -71,6 +71,7 @@ static void display_arp_tbl(void)
 }
 
 #else
+#define display_arp_entry(entry)
 #define arp_pkt_display(packet)
 #define display_arp_tbl()
 #endif

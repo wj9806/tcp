@@ -17,7 +17,8 @@
 #define DEBUG_ETHER             DEBUG_LEVEL_ERROR
 #define DEBUG_TOOLS             DEBUG_LEVEL_ERROR
 #define DEBUG_TIMER             DEBUG_LEVEL_ERROR
-#define DEBUG_ARP               DEBUG_LEVEL_INFO
+#define DEBUG_ARP               DEBUG_LEVEL_ERROR
+#define DEBUG_IP                DEBUG_LEVEL_INFO
 
 
 #define EXMSG_MSG_CNT           10

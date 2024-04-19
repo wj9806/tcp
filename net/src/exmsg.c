@@ -7,6 +7,7 @@
 #include "debug.h"
 #include "mblock.h"
 #include "timer.h"
+#include "ipv4.h"
 
 static void * msg_tbl[EXMSG_MSG_CNT];
 static fixq_t msg_queue;
@@ -53,7 +54,13 @@ static net_err_t do_netif_in (exmsg_t * msg)
         }
         else
         {
-            pktbuf_free(buf);
+            net_err_t err = ipv4_in(netif, buf);
+            if (err < 0)
+            {
+                pktbuf_free(buf);
+                debug_warn(DEBUG_MSG, "ipv4 in failed, error=%d", err);
+            }
+
         }
     }
     return NET_ERR_OK;

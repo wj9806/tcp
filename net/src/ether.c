@@ -9,6 +9,7 @@
 #include "tools.h"
 #include "protocol.h"
 #include "arp.h"
+#include "ipv4.h"
 
 static net_err_t is_pkt_ok(ether_pkt_t * pkt, int size)
 {
@@ -80,6 +81,15 @@ net_err_t ether_in(struct netif_t * netif, pktbuf_t * buf)
                 return NET_ERR_SIZE;
             }
             return arp_in(netif, buf);
+            break;
+        case NET_PROTOCOL_IPV4:
+            err = pktbuf_remove_header(buf, sizeof(ether_hdr_t));
+            if (err < 0)
+            {
+                debug_error(DEBUG_ETHER, "remove header failed");
+                return NET_ERR_SIZE;
+            }
+            return ipv4_in(netif, buf);
             break;
         default:
             debug_warn(DEBUG_ETHER, "unknown packet");
