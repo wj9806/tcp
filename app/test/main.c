@@ -10,7 +10,7 @@
 
 #define DEBUG_TEST    DEBUG_LEVEL_INFO
 
-typedef struct _tnode_t
+typedef struct
 {
     int id;
     node_t node;
@@ -63,7 +63,7 @@ net_err_t netdev_init()
     ipaddr_from_str(&addr, "192.168.74.255");
     buf = pktbuf_alloc(32);
     pktbuf_fill(buf, 0xA5, 32);
-    netif_out(netif, &addr, buf);
+    //netif_out(netif, &addr, buf);
     return NET_ERR_OK;
 }
 

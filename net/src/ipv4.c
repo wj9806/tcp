@@ -34,7 +34,15 @@ static net_err_t is_pkt_ok(ipv4_pkt_t * pkt, int size, netif_t * netif)
         debug_warn(DEBUG_IP, "ipv4 size error");
         return NET_ERR_SIZE;
     }
-
+    if (pkt->hdr.header_checksum)
+    {
+        uint16_t ch = checksum16(pkt, hdr_len, 0, 1);
+        if (ch != 0)
+        {
+            debug_warn(DEBUG_IP, "bad checksum");
+            return NET_ERR_BROKEN;
+        }
+    }
     return NET_ERR_OK;
 }
 
