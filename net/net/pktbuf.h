@@ -223,4 +223,9 @@ net_err_t pktbuf_fill(pktbuf_t * buf, uint8_t v, int size);
  */
 void pktbuf_inc_ref(pktbuf_t * buf);
 
+/**
+ * compute the checksum of the given pktbuf
+ */
+uint16_t pktbuf_checksum16(pktbuf_t * buf, int len, int pre_sum, int complement);
+
 #endif //NET_PKTBUF_H

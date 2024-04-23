@@ -13,6 +13,7 @@
 
 #define IPV4_ADDR_SIZE          4
 #define NET_VERSION_IPV4        4
+#define NET_IP_DEFAULT_TTL      64
 
 #pragma pack(1)
 //ipv4 struct
@@ -67,6 +68,11 @@ net_err_t ipv4_init();
 net_err_t ipv4_in(netif_t * netif, pktbuf_t * buf);
 
 /**
+ * output ipv4 data packet
+ */
+net_err_t ipv4_out(uint8_t protocol, ipaddr_t * dest, ipaddr_t * src, pktbuf_t * buf);
+
+/**
  * get the size of ipv4 data packet header
  * @param pkt ipv4 data packet
  * @return size
@@ -74,6 +80,14 @@ net_err_t ipv4_in(netif_t * netif, pktbuf_t * buf);
 static inline int ipv4_hdr_size(ipv4_pkt_t * pkt)
 {
     return pkt->hdr.shdr * 4;
+}
+
+/**
+ * set hdr size
+ */
+static inline void ipv4_set_hdr_size(ipv4_pkt_t * pkt, int len)
+{
+    pkt->hdr.shdr = len / 4;
 }
 
 #endif //NET_IPV4_H

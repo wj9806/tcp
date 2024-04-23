@@ -134,6 +134,11 @@ net_err_t netif_close(netif_t * netif);
 void netif_set_default(netif_t * netif);
 
 /**
+ * get default netif
+ */
+netif_t * netif_get_default();
+
+/**
  * write data packet to net interface's in_q
  * @param tmo timeout
  */

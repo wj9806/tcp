@@ -6,6 +6,7 @@
 #include "debug.h"
 #include "mblock.h"
 #include "locker.h"
+#include "tools.h"
 
 static locker_t locker;
 
@@ -640,4 +641,28 @@ void pktbuf_inc_ref(pktbuf_t * buf)
     locker_lock(&locker);
     buf->ref++;
     locker_unlock(&locker);
+}
+
+uint16_t pktbuf_checksum16(pktbuf_t * buf, int len, int pre_sum, int complement)
+{
+    assert(buf->ref != 0, "buf ref == 0")
+
+    int remain_size = total_blk_remain(buf);
+    if (remain_size < len)
+    {
+        debug_warn(DEBUG_PKTBUF, "len too big");
+        return 0;
+    }
+
+    uint16_t sum = pre_sum;
+    while (len > 0)
+    {
+        int blk_size = curr_blk_remain(buf);
+        int curr_size = (blk_size > len) ? len : blk_size;
+
+        sum = checksum16(buf->blk_offset, curr_size, sum, 0);
+        move_forward(buf, curr_size);
+        len -= curr_size;
+    }
+    return complement ? (uint16_t)~sum : sum;
 }

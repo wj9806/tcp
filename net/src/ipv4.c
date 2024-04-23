@@ -7,6 +7,30 @@
 #include "tools.h"
 #include "protocol.h"
 
+static uint16_t packet_id = 0;
+
+#if DEBUG_DISP_ENABLED(DEBUG_IP)
+static void display_ip_pkt(ipv4_pkt_t * pkt)
+{
+    ipv4_hdr_t * ip_hdr = &pkt->hdr;
+    plat_printf("---------------ip pkt---------------\n");
+
+    plat_printf("       version: %d\n", ip_hdr->version);
+    plat_printf("       header len: %d\n", ipv4_hdr_size(pkt));
+    plat_printf("       total len: %d\n", ip_hdr->total_len);
+    plat_printf("       id: %d\n", ip_hdr->id);
+    plat_printf("       ttl: %d\n", ip_hdr->ttl);
+    plat_printf("       protocol: %d\n", ip_hdr->protocol);
+    plat_printf("       checksum: %d\n", ip_hdr->header_checksum);
+    debug_dump_ip_buf("       src ip : ", ip_hdr->src_ip);
+    debug_dump_ip_buf("       dest ip : ", ip_hdr->dest_ip);
+    plat_printf("\n");
+}
+
+#else
+#define display_ip_pkt(pkt)
+#endif
+
 net_err_t ipv4_init()
 {
     debug_info(DEBUG_IP, "init ipv4");
@@ -54,10 +78,17 @@ static void iphdr_ntohs(ipv4_pkt_t * pkt)
     pkt->hdr.frag_all = x_ntohs(pkt->hdr.frag_all);
 }
 
+static void iphdr_htons(ipv4_pkt_t * pkt)
+{
+    pkt->hdr.total_len = x_htons(pkt->hdr.total_len);
+    pkt->hdr.id = x_htons(pkt->hdr.id);
+    pkt->hdr.frag_all = x_htons(pkt->hdr.frag_all);
+}
+
 static net_err_t ip_normal_in(netif_t * netif, pktbuf_t * buf, ipaddr_t * src_ip, ipaddr_t * dest_ip)
 {
     ipv4_pkt_t * pkt = (ipv4_pkt_t *)pktbuf_data(buf);
-
+    display_ip_pkt(pkt);
     switch (pkt->hdr.protocol) {
         case NET_PROTOCOL_ICMPv4:
             break;
@@ -107,5 +138,42 @@ net_err_t ipv4_in(netif_t * netif, pktbuf_t * buf)
     }
 
     err = ip_normal_in(netif, buf, &src_ip, &dest_ip);
+    return NET_ERR_OK;
+}
+
+net_err_t ipv4_out(uint8_t protocol, ipaddr_t * dest, ipaddr_t * src, pktbuf_t * buf)
+{
+    debug_info(DEBUG_IP, "send ip packet");
+
+    net_err_t err = pktbuf_add_header(buf, sizeof(ipv4_hdr_t), 1);
+    if (err < 0)
+    {
+        debug_error(DEBUG_IP, "add ip header error");
+        return NET_ERR_SIZE;
+    }
+
+    ipv4_pkt_t * pkt = (ipv4_pkt_t *) pktbuf_data(buf);
+    pkt->hdr.shdr_all = 0;
+    pkt->hdr.version = NET_VERSION_IPV4;
+    ipv4_set_hdr_size(pkt, sizeof(ipv4_hdr_t));
+    pkt->hdr.total_len = buf->total_size;
+    pkt->hdr.id = packet_id++;
+    pkt->hdr.frag_all = 0;
+    pkt->hdr.ttl = NET_IP_DEFAULT_TTL;
+    pkt->hdr.protocol = protocol;
+    pkt->hdr.header_checksum = 0;
+    ipaddr_to_buf(src, pkt->hdr.src_ip);
+    ipaddr_to_buf(dest, pkt->hdr.dest_ip);
+
+    iphdr_htons(pkt);
+    pktbuf_reset_access(buf);
+    pkt->hdr.header_checksum = pktbuf_checksum16(buf, ipv4_hdr_size(pkt), 0, 1);
+    display_ip_pkt(pkt);
+    err = netif_out(netif_get_default(), dest, buf);
+    if (err < 0)
+    {
+        debug_warn(DEBUG_IP, "send ip packet failed");
+        return err;
+    }
     return NET_ERR_OK;
 }
