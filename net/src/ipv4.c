@@ -6,6 +6,7 @@
 #include "debug.h"
 #include "tools.h"
 #include "protocol.h"
+#include "icmpv4.h"
 
 static uint16_t packet_id = 0;
 
@@ -91,6 +92,12 @@ static net_err_t ip_normal_in(netif_t * netif, pktbuf_t * buf, ipaddr_t * src_ip
     display_ip_pkt(pkt);
     switch (pkt->hdr.protocol) {
         case NET_PROTOCOL_ICMPv4:
+            net_err_t err = icmpv4_in(src_ip, &netif->ipaddr, buf);
+            if (err < 0)
+            {
+                debug_warn(DEBUG_IP, "icmp in failed");
+                return err;
+            }
             break;
         case NET_PROTOCOL_UDP:
             break;
