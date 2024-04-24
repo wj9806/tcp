@@ -61,7 +61,7 @@ net_err_t netdev_init()
     ipaddr_from_str(&dest, friend0_ip);
     ipaddr_from_str(&src, netdev0_ip);
     //netif_out(netif, &addr, buf);
-    ipv4_out(0, &dest, & src, buf);
+    //ipv4_out(0, &dest, & src, buf);
 
     //ipaddr_from_str(&addr, "192.168.74.255");
     //buf = pktbuf_alloc(32);
