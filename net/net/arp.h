@@ -80,4 +80,9 @@ void arp_clear(netif_t * netif);
  */
 const uint8_t * arp_find(netif_t * netif, ipaddr_t * ipaddr);
 
+/**
+ * update arp cache from ip date packet
+ */
+void arp_update_from_ipbuf(netif_t * netif, pktbuf_t * buf);
+
 #endif //NET_ARP_H

@@ -5,6 +5,19 @@
 #include "icmpv4.h"
 #include "debug.h"
 #include "ipv4.h"
+#include "protocol.h"
+
+#if DEBUG_DISP_ENABLED(DEBUG_ICMP)
+static void display_icmp_pkt(char * title, icmp_pkt_t * pkt)
+{
+    plat_printf("--------------- %s ------------", title);
+    plat_printf("       type: %d\n", pkt->hdr.type);
+    plat_printf("       code: %d\n", pkt->hdr.code);
+    plat_printf("       checksum: %d\n", pkt->hdr.checksum);
+}
+#else
+#define display_icmp_pkt(title, pkt);
+#endif
 
 net_err_t icmpv4_init()
 {
@@ -29,6 +42,23 @@ static net_err_t is_pkt_ok(icmp_pkt_t * icmp_pkt, int total_size, pktbuf_t * buf
     return NET_ERR_OK;
 }
 
+static net_err_t icmpv4_out(ipaddr_t * dest, ipaddr_t * src, pktbuf_t * buf)
+{
+    icmp_pkt_t * pkt = (icmp_pkt_t *) pktbuf_data(buf);
+    pktbuf_reset_access(buf);
+    pkt->hdr.checksum = pktbuf_checksum16(buf, buf->total_size, 0, 1);
+    display_icmp_pkt("icmp out", pkt);
+    return ipv4_out(NET_PROTOCOL_ICMPv4, dest, src, buf);
+}
+
+static net_err_t icmpv4_echo_reply(ipaddr_t * dest, ipaddr_t * src, pktbuf_t * buf)
+{
+    icmp_pkt_t * pkt = (icmp_pkt_t *) pktbuf_data(buf);
+    pkt->hdr.type = ICMPv4_ECHO_REPLY;
+    pkt->hdr.checksum = 0;
+    return icmpv4_out(dest, src, buf);
+}
+
 net_err_t icmpv4_in(ipaddr_t * src_ip, ipaddr_t * netif_ip, pktbuf_t * buf)
 {
     debug_info(DEBUG_ICMP, "icmpv4 in");
@@ -42,8 +72,6 @@ net_err_t icmpv4_in(ipaddr_t * src_ip, ipaddr_t * netif_ip, pktbuf_t * buf)
         return err;
     }
 
-    ip_pkt = (ipv4_pkt_t *) pktbuf_data(buf);
-
     err = pktbuf_remove_header(buf, iphdr_size);
     if (err < 0)
     {
@@ -55,6 +83,15 @@ net_err_t icmpv4_in(ipaddr_t * src_ip, ipaddr_t * netif_ip, pktbuf_t * buf)
     {
         debug_warn(DEBUG_ICMP, "icmp pkt error");
         return err;
+    }
+    display_icmp_pkt("icmp in", icmp_pkt);
+    switch (icmp_pkt->hdr.type) {
+        case ICMPv4_ECHO_REQUEST:
+            return icmpv4_echo_reply(src_ip, netif_ip, buf);
+            break;
+        default:
+            pktbuf_free(buf);
+            break;
     }
     return NET_ERR_OK;
 }

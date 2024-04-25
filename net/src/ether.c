@@ -83,6 +83,7 @@ net_err_t ether_in(struct netif_t * netif, pktbuf_t * buf)
             return arp_in(netif, buf);
             break;
         case NET_PROTOCOL_IPV4:
+            arp_update_from_ipbuf(netif, buf);
             err = pktbuf_remove_header(buf, sizeof(ether_hdr_t));
             if (err < 0)
             {

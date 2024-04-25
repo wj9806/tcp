@@ -9,6 +9,15 @@
 #include "ipaddr.h"
 #include "pktbuf.h"
 
+typedef enum {
+    ICMPv4_ECHO_REQUEST = 8,
+    ICMPv4_ECHO_REPLY = 0,
+} icmp_type_t;
+
+typedef enum {
+    ICMPv4_ECHO = 0,
+} icmp_code_t;
+
 #pragma pack(1)
 
 typedef struct {

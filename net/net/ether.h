@@ -16,9 +16,9 @@
 #pragma pack(1)
 //ether data packet header
 typedef struct {
-    //dest addr
+    //dest hardware addr
     uint8_t dest[ETHER_HWA_SIZE];
-    //src addr
+    //src hardware addr
     uint8_t src[ETHER_HWA_SIZE];
     //type
     uint16_t protocol;

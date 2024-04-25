@@ -7,6 +7,7 @@
 #include "tools.h"
 #include "protocol.h"
 #include "timer.h"
+#include "ipv4.h"
 
 #define to_scan_cnt(tmo)    (tmo/ARP_TIMER_TMO)
 
@@ -473,4 +474,24 @@ const uint8_t * arp_find(netif_t * netif, ipaddr_t * ipaddr)
         return entry->hwaddr;
     }
     return (const uint8_t *) 0;
+}
+
+void arp_update_from_ipbuf(netif_t * netif, pktbuf_t * buf)
+{
+    net_err_t err = pktbuf_set_cont(buf, sizeof(ipv4_hdr_t ) + sizeof(ether_hdr_t));
+    if (err < 0)
+    {
+        debug_error(DEBUG_ARP, "ajust header failed");
+        return;
+    }
+
+    ether_hdr_t * hdr = (ether_hdr_t *) pktbuf_data(buf);
+    ipv4_hdr_t * ipv4_hdr = (ipv4_hdr_t *)((uint8_t*)hdr + sizeof(ether_hdr_t));
+
+    if (ipv4_hdr->version != NET_VERSION_IPV4)
+    {
+        debug_warn(DEBUG_ARP, "not ipv4");
+        return;
+    }
+    cache_insert(netif, ipv4_hdr->src_ip, hdr->src, 0);
 }
