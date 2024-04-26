@@ -95,3 +95,42 @@ net_err_t icmpv4_in(ipaddr_t * src_ip, ipaddr_t * netif_ip, pktbuf_t * buf)
     }
     return NET_ERR_OK;
 }
+
+net_err_t icmpv4_out_unreachable(ipaddr_t * dest_ip, ipaddr_t * src, uint8_t code, pktbuf_t * buf)
+{
+    int copy_size = ipv4_hdr_size((ipv4_pkt_t *) pktbuf_data(buf)) + 576;
+    if (copy_size > buf->total_size)
+    {
+        copy_size = buf->total_size;
+    }
+
+    pktbuf_t * new_buf = pktbuf_alloc(copy_size + sizeof(icmpv4_hdr_t) + 4);
+    if (!new_buf)
+    {
+        debug_warn(DEBUG_ICMP, "alloc buf failed");
+        return NET_ERR_NONE;
+    }
+
+    icmp_pkt_t * pkt = (icmp_pkt_t *) pktbuf_data(new_buf);
+    pkt->hdr.type = ICMPv4_UNREACHABLE;
+    pkt->hdr.code = code;
+    pkt->hdr.checksum = 0;
+    pkt->reverse = 0;
+    pktbuf_reset_access(buf);
+    pktbuf_seek(new_buf, sizeof(icmpv4_hdr_t) + 4);
+    net_err_t err = pktbuf_copy(new_buf, buf, copy_size);
+    if (err < 0)
+    {
+        debug_error(DEBUG_ICMP, "copy buf failed");
+        pktbuf_free(new_buf);
+        return err;
+    }
+    err = icmpv4_out(dest_ip, src, new_buf);
+    if (err < 0)
+    {
+        debug_error(DEBUG_ICMP, "icmpv4 out failed");
+        pktbuf_free(new_buf);
+        return err;
+    }
+    return NET_ERR_OK; 
+}
