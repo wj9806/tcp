@@ -54,8 +54,8 @@ typedef struct {
             uint16_t offset : 13;
 #endif
         };
+        uint16_t frag_all;
     };
-    uint16_t frag_all;
     uint8_t ttl;
     uint8_t protocol;
     //header checksum

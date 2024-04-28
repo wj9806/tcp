@@ -97,6 +97,23 @@ static void frag_free(ip_frag_t * frag)
     mblock_free(&frag_mblock, frag);
 }
 
+static ip_frag_t * frag_find(ipaddr_t * ip, uint16_t id)
+{
+    node_t * curr;
+
+    list_for_each(curr, &frag_list)
+    {
+        ip_frag_t * frag = list_node_parent(curr, ip_frag_t, node);
+        if (ipaddr_is_equal(ip, &frag->ip) && (id == frag->id))
+        {
+            list_remove(&frag_list, curr);
+            list_insert_first(&frag_list, curr);
+            return frag;
+        }
+    }
+    return (ip_frag_t *) 0;
+}
+
 static net_err_t is_pkt_ok(ipv4_pkt_t * pkt, int size, netif_t * netif)
 {
     if (pkt->hdr.version != NET_VERSION_IPV4)
@@ -144,8 +161,25 @@ static void iphdr_htons(ipv4_pkt_t * pkt)
     pkt->hdr.frag_all = x_htons(pkt->hdr.frag_all);
 }
 
+static void frag_add(ip_frag_t * frag, ipaddr_t * ip, uint16_t id)
+{
+    ipaddr_copy(&frag->ip, ip);
+    frag->tmo = 0;
+    frag->id = id;
+    node_init(&frag->node);
+    list_init(&frag->buf_list);
+    list_insert_first(&frag_list, &frag->node);
+}
+
 static net_err_t ip_frag_in(netif_t * netif, pktbuf_t * buf, ipaddr_t * src_ip, ipaddr_t * dest_ip)
 {
+    ipv4_pkt_t * curr = (ipv4_pkt_t *) pktbuf_data(buf);
+    ip_frag_t * frag = frag_find(src_ip, curr->hdr.id);
+    if (!frag)
+    {
+        frag = frag_alloc();
+        frag_add(frag, src_ip, curr->hdr.id);
+    }
     return NET_ERR_OK;
 }
 
