@@ -7,8 +7,13 @@
 #include "tools.h"
 #include "protocol.h"
 #include "icmpv4.h"
+#include "mblock.h"
 
 static uint16_t packet_id = 0;
+static ip_frag_t frag_array[IP_FRAGS_MAX_NR];
+
+static mblock_t frag_mblock;
+static list_t frag_list;
 
 #if DEBUG_DISP_ENABLED(DEBUG_IP)
 static void display_ip_pkt(ipv4_pkt_t * pkt)
@@ -21,6 +26,8 @@ static void display_ip_pkt(ipv4_pkt_t * pkt)
     plat_printf("       total len: %d\n", ip_hdr->total_len);
     plat_printf("       id: %d\n", ip_hdr->id);
     plat_printf("       ttl: %d\n", ip_hdr->ttl);
+    plat_printf("       frag offset: %d\n", ip_hdr->frag_offset);
+    plat_printf("       frag more: %d\n", ip_hdr->more);
     plat_printf("       protocol: %d\n", ip_hdr->protocol);
     plat_printf("       checksum: %d\n", ip_hdr->header_checksum);
     debug_dump_ip_buf("       src ip : ", ip_hdr->src_ip);
@@ -32,9 +39,27 @@ static void display_ip_pkt(ipv4_pkt_t * pkt)
 #define display_ip_pkt(pkt)
 #endif
 
+static net_err_t frag_init()
+{
+    list_init(&frag_list);
+    net_err_t err = mblock_init(&frag_mblock, frag_array, sizeof(ip_frag_t), IP_FRAGS_MAX_NR, LOCKER_NONE);
+    if (err < 0)
+    {
+        return err;
+    }
+    return NET_ERR_OK;
+}
+
 net_err_t ipv4_init()
 {
     debug_info(DEBUG_IP, "init ipv4");
+
+    net_err_t err = frag_init();
+    if (err < 0)
+    {
+        debug_error(DEBUG_IP, "frag init failed");
+        return err;
+    }
 
     return NET_ERR_OK;
 }
