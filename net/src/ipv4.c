@@ -64,6 +64,39 @@ net_err_t ipv4_init()
     return NET_ERR_OK;
 }
 
+static void frag_free_buf_list(ip_frag_t * frag)
+{
+    node_t * node;
+    while ((node = list_remove_first(&frag->buf_list)))
+    {
+        pktbuf_t * buf = list_node_parent(node, pktbuf_t, node);
+        pktbuf_free(buf);
+    }
+}
+
+//alloc frag
+static ip_frag_t * frag_alloc()
+{
+    ip_frag_t * frag = mblock_alloc(&frag_mblock, -1);
+    if (!frag)
+    {
+        node_t * node = list_remove_last(&frag_list);
+        frag = list_node_parent(node, ip_frag_t, node);
+        if (frag)
+        {
+            frag_free_buf_list(frag);
+        }
+    }
+    return frag;
+}
+
+static void frag_free(ip_frag_t * frag)
+{
+    frag_free_buf_list(frag);
+    list_remove(&frag_list, &frag->node);
+    mblock_free(&frag_mblock, frag);
+}
+
 static net_err_t is_pkt_ok(ipv4_pkt_t * pkt, int size, netif_t * netif)
 {
     if (pkt->hdr.version != NET_VERSION_IPV4)
@@ -109,6 +142,11 @@ static void iphdr_htons(ipv4_pkt_t * pkt)
     pkt->hdr.total_len = x_htons(pkt->hdr.total_len);
     pkt->hdr.id = x_htons(pkt->hdr.id);
     pkt->hdr.frag_all = x_htons(pkt->hdr.frag_all);
+}
+
+static net_err_t ip_frag_in(netif_t * netif, pktbuf_t * buf, ipaddr_t * src_ip, ipaddr_t * dest_ip)
+{
+    return NET_ERR_OK;
 }
 
 static net_err_t ip_normal_in(netif_t * netif, pktbuf_t * buf, ipaddr_t * src_ip, ipaddr_t * dest_ip)
@@ -170,8 +208,14 @@ net_err_t ipv4_in(netif_t * netif, pktbuf_t * buf)
         debug_warn(DEBUG_IP, "ipaddr not match");
         return NET_ERR_UNREACHABLE;
     }
-
-    err = ip_normal_in(netif, buf, &src_ip, &dest_ip);
+    if (pkt->hdr.frag_offset || pkt->hdr.more)
+    {
+        err = ip_frag_in(netif, buf, &src_ip, &dest_ip);
+    }
+    else
+    {
+        err = ip_normal_in(netif, buf, &src_ip, &dest_ip);
+    }
     return NET_ERR_OK;
 }
 
