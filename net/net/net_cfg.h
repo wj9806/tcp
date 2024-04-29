@@ -47,5 +47,6 @@
 #define ARP_ENTRY_STABLE_TMO    5
 
 #define IP_FRAGS_MAX_NR         5
+#define IP_FRAG_MAX_BUF_NR      10
 
 #endif //NET_NET_CFG_H
