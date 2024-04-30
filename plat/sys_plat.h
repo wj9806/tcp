@@ -103,7 +103,7 @@ pcap_t * pcap_device_open(const char* ip, const uint8_t* mac_addr);
 
 #elif defined(SYS_PLAT_LINUX) || defined(SYS_PLAT_MAC)
 
-#include <semaphore.h>
+  #include <semaphore.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/time.h>

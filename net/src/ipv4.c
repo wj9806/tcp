@@ -248,6 +248,76 @@ static net_err_t frag_insert(ip_frag_t * frag, pktbuf_t * buf, ipv4_pkt_t * pkt)
     return NET_ERR_OK;
 }
 
+/**
+ * Determine whether all fragments have arrived
+ */
+static int frag_is_all_arrived(ip_frag_t * frag)
+{
+    int offset = 0;
+    node_t * node;
+    ipv4_pkt_t * pkt = (ipv4_pkt_t *)0;
+    list_for_each(node, &frag->buf_list)
+    {
+        pktbuf_t * buf = list_node_parent(node, pktbuf_t, node);
+        pkt = (ipv4_pkt_t *) pktbuf_data(buf);
+
+        int curr_offset = get_frag_start(pkt);
+        if (curr_offset != offset)
+        {
+            return 0;
+        }
+
+        offset += get_data_size(pkt);
+    }
+
+    return pkt ? !pkt->hdr.more : 0;
+}
+
+/**
+ * merge fragments
+ */
+static pktbuf_t * frag_merge(ip_frag_t * frag)
+{
+    pktbuf_t * target = (pktbuf_t *)0;
+    node_t * node;
+    while ((node = list_remove_first(&frag->buf_list)))
+    {
+        pktbuf_t * curr = list_node_parent(node, pktbuf_t, node);
+
+        if (!target)
+        {
+            target = curr;
+            continue;
+        }
+        ipv4_pkt_t * pkt = (ipv4_pkt_t *) pktbuf_data(curr);
+        net_err_t err = pktbuf_remove_header(curr, ipv4_hdr_size(pkt));
+        if (err < 0)
+        {
+            debug_error(DEBUG_IP, "remove ip header failed");
+            pktbuf_free(curr);
+            goto free_and_return;
+        }
+        err = pktbuf_merge(target, curr);
+        if (err < 0)
+        {
+            debug_error(DEBUG_IP, "join ip frag failed");
+            pktbuf_free(curr);
+            goto free_and_return;
+        }
+    }
+    frag_free(frag);
+    return target;
+    free_and_return:
+    if (target)
+    {
+        pktbuf_free(target);
+    }
+    frag_free(frag);
+    return (pktbuf_t*)0;
+}
+
+static net_err_t ip_normal_in(netif_t * netif, pktbuf_t * buf, ipaddr_t * src_ip, ipaddr_t * dest_ip);
+
 static net_err_t ip_frag_in(netif_t * netif, pktbuf_t * buf, ipaddr_t * src_ip, ipaddr_t * dest_ip)
 {
     ipv4_pkt_t * curr = (ipv4_pkt_t *) pktbuf_data(buf);
@@ -262,6 +332,24 @@ static net_err_t ip_frag_in(netif_t * netif, pktbuf_t * buf, ipaddr_t * src_ip, 
     {
         debug_warn(DEBUG_IP, "frag insert failed");
         return err;
+    }
+    if (frag_is_all_arrived(frag))
+    {
+        pktbuf_t * full_buf = frag_merge(frag);
+        if (!full_buf)
+        {
+            debug_error(DEBUG_IP, "merge ip bufs failed");
+            display_ip_frags();
+            return NET_ERR_OK;
+        }
+
+        err = ip_normal_in(netif, full_buf, src_ip, dest_ip);
+        if (err < 0)
+        {
+            debug_warn(DEBUG_IP, "ip frag in failed");
+            pktbuf_free(full_buf);
+            return NET_ERR_OK;
+        }
     }
     display_ip_frags();
     return NET_ERR_OK;
