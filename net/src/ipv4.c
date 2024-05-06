@@ -425,9 +425,91 @@ net_err_t ipv4_in(netif_t * netif, pktbuf_t * buf)
     return NET_ERR_OK;
 }
 
+net_err_t ip_frag_out(uint8_t protocol, ipaddr_t * dest, ipaddr_t * src, pktbuf_t * buf, netif_t * netif)
+{
+    debug_info(DEBUG_IP, "frag send ip pkt");
+    pktbuf_reset_access(buf);
+
+    int offset = 0;
+    int total = buf->total_size;
+
+    while (total)
+    {
+        int curr_size = total;
+        if (curr_size + sizeof(ipv4_hdr_t)> netif->mtu)
+        {
+            curr_size = (int)(netif->mtu - sizeof(ipv4_hdr_t));
+        }
+
+        pktbuf_t * dest_buf = pktbuf_alloc((int) (curr_size + sizeof(ipv4_hdr_t)));
+        if (!dest_buf)
+        {
+            debug_error(DEBUG_IP, "alloc buf failed");
+            return NET_ERR_NONE;
+        }
+        ipv4_pkt_t * pkt = (ipv4_pkt_t *) pktbuf_data(dest_buf);
+        pkt->hdr.shdr_all = 0;
+        pkt->hdr.version = NET_VERSION_IPV4;
+        ipv4_set_hdr_size(pkt, sizeof(ipv4_hdr_t));
+        pkt->hdr.total_len = dest_buf->total_size;
+        pkt->hdr.id = packet_id;
+        pkt->hdr.frag_all = 0;
+        pkt->hdr.ttl = NET_IP_DEFAULT_TTL;
+        pkt->hdr.protocol = protocol;
+        pkt->hdr.header_checksum = 0;
+        ipaddr_to_buf(src, pkt->hdr.src_ip);
+        ipaddr_to_buf(dest, pkt->hdr.dest_ip);
+        pkt->hdr.frag_offset = offset >> 3;
+        pkt->hdr.more = total > curr_size;
+        pktbuf_seek(dest_buf, sizeof(ipv4_hdr_t));
+        net_err_t err = pktbuf_copy(dest_buf, buf, curr_size);
+        if (err < 0)
+        {
+            debug_error(DEBUG_IP, "frag buf copy failed");
+            pktbuf_free(dest_buf);
+            return err;
+        }
+
+        pktbuf_remove_header(buf, curr_size);
+        pktbuf_reset_access(buf);
+
+        iphdr_htons(pkt);
+        pktbuf_reset_access(dest_buf);
+        pkt->hdr.header_checksum = pktbuf_checksum16(dest_buf, ipv4_hdr_size(pkt), 0, 1);
+
+        display_ip_pkt(pkt);
+
+        err = netif_out(netif, dest, dest_buf);
+        if (err < 0)
+        {
+            debug_warn(DEBUG_IP, "send ip frag failed");
+            pktbuf_free(dest_buf);
+            return err;
+        }
+        total -= curr_size;
+        offset += curr_size;
+    }
+    packet_id++;
+    pktbuf_free(buf);
+    return NET_ERR_OK;
+}
+
+
 net_err_t ipv4_out(uint8_t protocol, ipaddr_t * dest, ipaddr_t * src, pktbuf_t * buf)
 {
     debug_info(DEBUG_IP, "send ip packet");
+
+    netif_t * netif = netif_get_default();
+    if (netif->mtu && ((buf->total_size + sizeof(ipv4_hdr_t)) > netif->mtu))
+    {
+        net_err_t err = ip_frag_out(protocol, dest, src, buf, netif);
+        if (err < 0)
+        {
+            debug_warn(DEBUG_IP, "send ip frag failed");
+            return err;
+        }
+        return NET_ERR_OK;
+    }
 
     net_err_t err = pktbuf_add_header(buf, sizeof(ipv4_hdr_t), 1);
     if (err < 0)
