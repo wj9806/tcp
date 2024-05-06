@@ -655,14 +655,16 @@ uint16_t pktbuf_checksum16(pktbuf_t * buf, int len, int pre_sum, int complement)
     }
 
     uint16_t sum = pre_sum;
+    uint32_t offset = 0;
     while (len > 0)
     {
         int blk_size = curr_blk_remain(buf);
         int curr_size = (blk_size > len) ? len : blk_size;
 
-        sum = checksum16(buf->blk_offset, curr_size, sum, 0);
+        sum = checksum16(offset, buf->blk_offset, curr_size, sum, 0);
         move_forward(buf, curr_size);
         len -= curr_size;
+        offset += curr_size;
     }
     return complement ? (uint16_t)~sum : sum;
 }

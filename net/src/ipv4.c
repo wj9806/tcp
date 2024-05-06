@@ -205,7 +205,7 @@ static net_err_t is_pkt_ok(ipv4_pkt_t * pkt, int size, netif_t * netif)
     }
     if (pkt->hdr.header_checksum)
     {
-        uint16_t ch = checksum16(pkt, hdr_len, 0, 1);
+        uint16_t ch = checksum16(0, pkt, hdr_len, 0, 1);
         if (ch != 0)
         {
             debug_warn(DEBUG_IP, "bad checksum");

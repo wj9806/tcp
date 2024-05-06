@@ -23,7 +23,7 @@
 
 
 #define EXMSG_MSG_CNT           10
-#define PKTBUF_BLK_SIZE         128
+#define PKTBUF_BLK_SIZE         127
 #define PKTBUF_BLK_CNT          100
 #define PKTBUF_BUF_CNT          100
 
