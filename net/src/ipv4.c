@@ -8,12 +8,14 @@
 #include "protocol.h"
 #include "icmpv4.h"
 #include "mblock.h"
+#include "timer.h"
 
 static uint16_t packet_id = 0;
 static ip_frag_t frag_array[IP_FRAGS_MAX_NR];
 
 static mblock_t frag_mblock;
 static list_t frag_list;
+static net_timer_t frag_timer;
 
 static int get_data_size(ipv4_pkt_t * pkt)
 {
@@ -80,12 +82,54 @@ static void display_ip_frags()
 #define display_ip_frags()
 #endif
 
+static void frag_free_buf_list(ip_frag_t * frag)
+{
+    node_t * node;
+    while ((node = list_remove_first(&frag->buf_list)))
+    {
+        pktbuf_t * buf = list_node_parent(node, pktbuf_t, node);
+        pktbuf_free(buf);
+    }
+}
+
+static void frag_free(ip_frag_t * frag)
+{
+    frag_free_buf_list(frag);
+    list_remove(&frag_list, &frag->node);
+    mblock_free(&frag_mblock, frag);
+}
+
+/**
+ * ip frag packet timeout scan function
+ */
+static void frag_tmo(struct net_timer_t * timer, void * arg)
+{
+    node_t * curr, * next;
+    for (curr = list_first(&frag_list); curr; curr = next)
+    {
+        next = list_node_next(curr);
+        ip_frag_t * frag = list_node_parent(curr, ip_frag_t, node);
+        if (--frag->tmo <= 0)
+        {
+            frag_free(frag);
+        }
+    }
+}
+
 static net_err_t frag_init()
 {
     list_init(&frag_list);
     net_err_t err = mblock_init(&frag_mblock, frag_array, sizeof(ip_frag_t), IP_FRAGS_MAX_NR, LOCKER_NONE);
     if (err < 0)
     {
+        debug_error(DEBUG_IP, "mblock init failed");
+        return err;
+    }
+
+    err = net_timer_add(&frag_timer, "frag-timer", frag_tmo, (void *)0, IP_FRAG_SCAN_PERIOD * 1000, NET_TIMER_RELOAD);
+    if (err < 0)
+    {
+        debug_error(DEBUG_IP, "create frag timer failed");
         return err;
     }
     return NET_ERR_OK;
@@ -105,16 +149,6 @@ net_err_t ipv4_init()
     return NET_ERR_OK;
 }
 
-static void frag_free_buf_list(ip_frag_t * frag)
-{
-    node_t * node;
-    while ((node = list_remove_first(&frag->buf_list)))
-    {
-        pktbuf_t * buf = list_node_parent(node, pktbuf_t, node);
-        pktbuf_free(buf);
-    }
-}
-
 //alloc frag
 static ip_frag_t * frag_alloc()
 {
@@ -129,13 +163,6 @@ static ip_frag_t * frag_alloc()
         }
     }
     return frag;
-}
-
-static void frag_free(ip_frag_t * frag)
-{
-    frag_free_buf_list(frag);
-    list_remove(&frag_list, &frag->node);
-    mblock_free(&frag_mblock, frag);
 }
 
 static ip_frag_t * frag_find(ipaddr_t * ip, uint16_t id)
@@ -205,7 +232,7 @@ static void iphdr_htons(ipv4_pkt_t * pkt)
 static void frag_add(ip_frag_t * frag, ipaddr_t * ip, uint16_t id)
 {
     ipaddr_copy(&frag->ip, ip);
-    frag->tmo = 0;
+    frag->tmo = IP_FRAG_TMO / IP_FRAG_SCAN_PERIOD;
     frag->id = id;
     node_init(&frag->node);
     list_init(&frag->buf_list);
@@ -346,7 +373,7 @@ static net_err_t ip_frag_in(netif_t * netif, pktbuf_t * buf, ipaddr_t * src_ip, 
         err = ip_normal_in(netif, full_buf, src_ip, dest_ip);
         if (err < 0)
         {
-            debug_warn(DEBUG_IP, "ip frag in failed");
+            debug_warn(DEBUG_IP, "ip frag in failed: %d", err);
             pktbuf_free(full_buf);
             return NET_ERR_OK;
         }
