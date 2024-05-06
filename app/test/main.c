@@ -7,7 +7,7 @@
 #include "pktbuf.h"
 #include "netif.h"
 #include "timer.h"
-#include "ipv4.h"
+#include "ping/ping.h"
 
 #define DEBUG_TEST    DEBUG_LEVEL_INFO
 
@@ -266,6 +266,10 @@ int main()
     net_init();
     netdev_init();
     net_start();
+
+    ping_t ping;
+    ping_run(&ping, friend0_ip, 4, 64, 1000);
+
     test();
     for(;;)
     {
