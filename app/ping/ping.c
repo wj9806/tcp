@@ -69,6 +69,7 @@ void ping_run(ping_t * ping, const char * dest, int count, int size, int interva
             printf("send ping request failed\n");
             break;
         }
+        clock_t time = clock();
 
         memset(&ping->reply, 0, sizeof(ping->reply));
 
@@ -87,8 +88,38 @@ void ping_run(ping_t * ping, const char * dest, int count, int size, int interva
                 break;
             }
         } while (1);
+        if (size > 0)
+        {
+            int recv_size = size - sizeof(ip_hdr_t) - sizeof(icmp_hdr_t);
+            if (memcmp(ping->req.buf, ping->reply.buf, recv_size))
+            {
+                printf("recv data error\n");
+                continue;
+            }
 
-        printf("recv ping\n");
+            int diff_ms = (clock() - time) / (CLOCKS_PER_SEC / 1000);
+
+            ip_hdr_t * ip_hdr = &ping->reply.ip_hdr;
+            int send_size = fill_size;
+            if (recv_size == send_size)
+            {
+                printf("reply from %s: bytes=%d", inet_ntoa(addr.sin_addr), send_size);
+            }
+            else
+            {
+                printf("reply from %s: bytes=%d(send=%d)", inet_ntoa(addr.sin_addr), recv_size, send_size);
+            }
+
+            if (diff_ms < 1)
+            {
+                printf(", time < 1ms, TTL=%d\n", ip_hdr->ttl);
+            }
+            else{
+                printf(", time = %dms, TTL=%d\n", diff_ms, ip_hdr->ttl);
+            }
+
+        }
+        sys_sleep(interval);
     }
     goto end;
     end:

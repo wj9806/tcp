@@ -268,7 +268,7 @@ int main()
     net_start();
 
     ping_t ping;
-    ping_run(&ping, friend0_ip, 4, 64, 1000);
+    ping_run(&ping, friend0_ip, 1000, 64, 1000);
 
     test();
     for(;;)

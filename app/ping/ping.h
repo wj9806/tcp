@@ -6,6 +6,7 @@
 #define NET_PING_H
 
 #include <stdint.h>
+#include <time.h>
 
 #define PING_BUFFER_SIZE    4096
 #define IP_ADDR_SIZE        4
