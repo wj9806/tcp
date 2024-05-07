@@ -44,6 +44,9 @@ void ping_run(ping_t * ping, const char * dest, int count, int size, int interva
         goto end;
     }
 
+    int tmo = 5000;
+    setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tmo, sizeof(tmo));
+
     struct sockaddr_in addr;
     plat_memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;

@@ -8,7 +8,7 @@
 //data packet recv thread
 void recv_thread (void * arg)
 {
-    plat_printf("recv thread is running!\n");
+    debug_info(DEBUG_NETIF, "recv thread is running!\n");
     netif_t * netif = (netif_t *) arg;
     pcap_t * pcap = (pcap_t *) netif->ops_data;
     while (1)
@@ -41,7 +41,7 @@ void recv_thread (void * arg)
 //data packet xmit thread
 void xmit_thread (void * arg)
 {
-    plat_printf("xmit thread is running!\n");
+    debug_info(DEBUG_NETIF, "xmit thread is running!\n");
 
     netif_t * netif = (netif_t *) arg;
     pcap_t * pcap = (pcap_t *) netif->ops_data;
