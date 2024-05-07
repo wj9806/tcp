@@ -30,4 +30,11 @@ struct x_sockaddr_in {
     char sin_zero[8];
 };
 
+/**
+ *
+ * @param family protocol family
+ * @param type socket type
+ */
+int x_socket(int family, int type, int protocol);
+
 #endif //NET_SOCKET_H

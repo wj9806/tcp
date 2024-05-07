@@ -15,8 +15,16 @@
 #undef  AF_INET
 #define AF_INET         2
 
+#undef SOCK_RAW
+#define SOCK_RAW        0
+
+#undef IPPROTO_ICMP
+#define IPPROTO_ICMP    0
+
 #undef  sockaddr_in
 #define sockaddr_in x_sockaddr_in
+
+#define socket(family, type, protocol)  x_socket(family, type, protocol)
 
 #define x_htons(v)        swap_u16(v)
 #define x_ntohs(v)        swap_u16(v)
