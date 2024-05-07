@@ -15,6 +15,53 @@ static fixq_t msg_queue;
 static exmsg_t msg_buffer[EXMSG_MSG_CNT];
 static mblock_t msg_block;
 
+net_err_t test_func(func_msg_t * msg)
+{
+    printf("hello 1234: 0x%x\n", *(int *)msg->param);
+    return NET_ERR_OK;
+}
+
+net_err_t exmsg_func_exec(exmsg_func_t func, void * param)
+{
+    func_msg_t func_msg;
+    func_msg.func = func;
+    func_msg.param = param;
+    func_msg.err = NET_ERR_OK;
+    func_msg.thread = sys_thread_self();
+    func_msg.wait_sem = sys_sem_create(0);
+    if (func_msg.wait_sem == SYS_SEM_INVALID)
+    {
+        debug_error(DEBUG_MSG, "create wait sem failed");
+        return NET_ERR_MEM;
+    }
+
+    exmsg_t * msg = mblock_alloc(&msg_block, 0);
+    if (!msg)
+    {
+        debug_warn(DEBUG_MSG, "no free msg");
+        sys_sem_free(func_msg.wait_sem);
+        return NET_ERR_MEM;
+    }
+
+    msg->type = NET_EXMSG_FUN;
+    msg->func = &func_msg;
+
+    debug_info(DEBUG_MSG, "begin call func: %p", func);
+
+    net_err_t err = fixq_send(&msg_queue, msg, 0);
+    if (err < 0)
+    {
+        debug_warn(DEBUG_MSG, "fixq full");
+        mblock_free(&msg_block, msg);
+        sys_sem_free(func_msg.wait_sem);
+        return err;
+    }
+
+    //wait for function executed
+    sys_sem_wait(func_msg.wait_sem, 0);
+    return func_msg.err;
+}
+
 net_err_t exmsg_init(void)
 {
     net_err_t err = fixq_init(&msg_queue, msg_tbl, EXMSG_MSG_CNT, EXMSG_LOCKER);
@@ -66,6 +113,13 @@ static net_err_t do_netif_in (exmsg_t * msg)
     return NET_ERR_OK;
 }
 
+static void do_func(func_msg_t * func)
+{
+    debug_info(DEBUG_MSG, "call func");
+    func->err = func->func(func);
+    sys_sem_notify(func->wait_sem);
+}
+
 static void work_thread(void * arg)
 {
     debug_info(DEBUG_MSG, "exmsg is running");
@@ -81,6 +135,9 @@ static void work_thread(void * arg)
             switch (msg->type) {
                 case NET_EXMSG_NETIF_IN:
                     do_netif_in(msg);
+                    break;
+                case NET_EXMSG_FUN:
+                    do_func(msg->func);
                     break;
                 default:
                     break;

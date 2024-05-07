@@ -8,6 +8,7 @@
 #include "netif.h"
 #include "timer.h"
 #include "ping/ping.h"
+#include "exmsg.h"
 
 #define DEBUG_TEST    DEBUG_LEVEL_INFO
 
@@ -266,6 +267,9 @@ int main()
     net_init();
     netdev_init();
     net_start();
+
+    int arg = 0x12345;
+    net_err_t err = exmsg_func_exec(test_func, &arg);
 
     ping_t ping;
     char cmd[32], param[32];
