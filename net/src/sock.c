@@ -1,11 +1,13 @@
 //
 // Created by wj on 2024/5/8.
 //
+#include "net_api.h"
 #include "sock.h"
 #include "sys_plat.h"
 #include "exmsg.h"
+#include "raw.h"
 
-#define SOCKET_MAX_NR   10
+#define SOCKET_MAX_NR   (RAW_MAX_NR)
 
 static x_socket_t socket_tbl[SOCKET_MAX_NR];
 
@@ -79,15 +81,41 @@ net_err_t sock_init(sock_t * sock, int family, int protocol, const sock_ops_t * 
 
 net_err_t sock_create_req_in(struct func_msg_t * msg)
 {
-    sock_req_t * req = (sock_req_t *)msg->param;
+    static const struct socket_info_t {
+        int protocol;
+        sock_t * (*create) (int family, int protocol);
+    } sock_tbl[] = {
+            [SOCK_RAW] = {.protocol = IPPROTO_ICMP, .create = raw_create,}
+    };
 
+    sock_req_t * req = (sock_req_t *)msg->param;
+    sock_create_t * param = &req->create;
     x_socket_t * s = socket_alloc();
     if (!s)
     {
         debug_error(DEBUG_SOCKET, "no socket");
         return NET_ERR_MEM;
     }
+    if (param->type < 0 || param->type >= (sizeof(sock_tbl) / sizeof(sock_tbl[0])))
+    {
+        debug_error(DEBUG_SOCKET, "param type error: %d", param->type);
+        return NET_ERR_PARAM;
+    }
 
+    const struct socket_info_t * info = sock_tbl + param->type;
+    if (param->protocol == 0)
+    {
+        param->protocol = info->protocol;
+    }
+    //create sock
+    sock_t * sock = info->create(param->family, param->protocol);
+    if (!sock)
+    {
+        debug_error(DEBUG_SOCKET, "create sock failed");
+        socket_free(s);
+        return NET_ERR_MEM;
+    }
+    s->sock = sock;
     req->sockfd = get_index(s);
     return NET_ERR_OK;
 }

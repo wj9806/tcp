@@ -21,6 +21,7 @@
 #define DEBUG_IP                DEBUG_LEVEL_ERROR
 #define DEBUG_ICMP              DEBUG_LEVEL_ERROR
 #define DEBUG_SOCKET            DEBUG_LEVEL_INFO
+#define DEBUG_RAW               DEBUG_LEVEL_INFO
 
 
 #define EXMSG_MSG_CNT           10
@@ -51,5 +52,7 @@
 #define IP_FRAG_MAX_BUF_NR      10
 #define IP_FRAG_SCAN_PERIOD     1
 #define IP_FRAG_TMO             10
+
+#define RAW_MAX_NR              10
 
 #endif //NET_NET_CFG_H

@@ -11,6 +11,7 @@
 #include "ipv4.h"
 #include "icmpv4.h"
 #include "sock.h"
+#include "raw.h"
 
 net_err_t net_init(void)
 {
@@ -27,6 +28,7 @@ net_err_t net_init(void)
     ipv4_init();
     icmpv4_init();
     socket_init();
+    raw_init();
     return NET_ERR_OK;
 }
 
