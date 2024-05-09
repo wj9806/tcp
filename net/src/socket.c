@@ -17,6 +17,9 @@ net_err_t sock_recvfrom_req_in(struct func_msg_t * msg);
 //set sockopt
 net_err_t sock_setsockopt_req_in(struct func_msg_t * msg);
 
+//close socket
+net_err_t sock_close_req_in(struct func_msg_t * msg);
+
 int x_socket(int family, int type, int protocol)
 {
     sock_req_t req;
@@ -150,5 +153,26 @@ int x_setsockopt(int s, int level, int optname, const char * optval, int len)
         debug_info(DEBUG_SOCKET, "set sock opt failed");
         return -1;
     }
+    return 0;
+}
+
+int x_close(int s)
+{
+    sock_req_t req;
+    req.wait = (sock_wait_t *)0;
+    req.wait_tmo = 0;
+    req.sockfd = s;
+    net_err_t err = exmsg_func_exec(sock_close_req_in, &req);
+    if (err < 0)
+    {
+        debug_info(DEBUG_SOCKET, "set sock opt failed");
+        return -1;
+    }
+
+    if (req.wait)
+    {
+        sock_wait_enter(req.wait, req.wait_tmo);
+    }
+
     return 0;
 }

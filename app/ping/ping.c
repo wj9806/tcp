@@ -132,6 +132,6 @@ void ping_run(ping_t * ping, const char * dest, int count, int size, int interva
     end:
     if (s >= 0)
     {
-        closesocket(s);
+        close(s);
     }
 }

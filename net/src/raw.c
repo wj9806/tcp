@@ -13,6 +13,26 @@ static raw_t raw_tbl[RAW_MAX_NR];
 static mblock_t raw_mblock;
 static list_t raw_list;
 
+#if DEBUG_DISP_ENABLED(DEBUG_RAW)
+static void display_raw_list(void)
+{
+    plat_printf("--------------raw list---------------\n");
+    node_t * node;
+    int idx = 0;
+
+    list_for_each(node, &raw_list)
+    {
+        raw_t * raw = (raw_t *) list_node_parent(node, sock_t, node);
+        plat_printf("[%d]:", idx++);
+        debug_dump_ip("     local: ", &raw->base.local_ip);
+        debug_dump_ip("     remote: ", &raw->base.remote_ip);
+        plat_printf("\n");
+    }
+}
+#else
+#define display_raw_list()
+#endif
+
 net_err_t raw_init()
 {
     debug_info(DEBUG_RAW, "raw init");
@@ -93,12 +113,30 @@ static net_err_t raw_recvfrom(struct sock_t * s, void * buf, size_t len, int fla
     return NET_ERR_OK;
 }
 
+static net_err_t raw_close(sock_t * sock)
+{
+    raw_t * raw = (raw_t *) sock;
+    list_remove(&raw_list, &sock->node);
+    node_t * node;
+    while ((node= list_remove_first(&raw->recv_list)))
+    {
+        pktbuf_t *buf = list_node_parent(node, pktbuf_t, node);
+        pktbuf_free(buf);
+    }
+
+    sock_uninit(sock);
+    mblock_free(&raw_mblock, sock);
+    display_raw_list();
+    return NET_ERR_OK;
+}
+
 sock_t * raw_create(int family, int protocol)
 {
     static const sock_ops_t raw_ops = {
             .sendto = raw_sendto,
             .recvfrom = raw_recvfrom,
             .setopt = sock_setopt,
+            .close = raw_close,
     };
     raw_t * raw = mblock_alloc(&raw_mblock, -1);
     if (!raw)

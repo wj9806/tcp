@@ -84,4 +84,9 @@ ssize_t x_recvfrom(int s, const void * buf, size_t len, int flags, const struct 
  */
 int x_setsockopt(int s, int level, int optname, const char * optval, int len);
 
+/**
+ * close socket
+ */
+int x_close(int s);
+
 #endif //NET_SOCKET_H

@@ -315,3 +315,25 @@ net_err_t sock_setsockopt_req_in(struct func_msg_t * msg)
 
     return sock->ops->setopt(sock, opt->level, opt->optname, opt->optval, opt->len);
 }
+
+net_err_t sock_close_req_in(struct func_msg_t * msg)
+{
+    sock_req_t * req = (sock_req_t *)msg->param;
+
+    x_socket_t * s = get_socket(req->sockfd);
+    if (!s)
+    {
+        debug_error(DEBUG_SOCKET, "param error");
+        return NET_ERR_PARAM;
+    }
+
+    sock_t * sock = s->sock;
+    if (!sock->ops->close)
+    {
+        debug_error(DEBUG_SOCKET, "close func no impl");
+        return NET_ERR_NONE;
+    }
+    net_err_t err = sock->ops->close(sock);
+    socket_free(s);
+    return err;
+}
