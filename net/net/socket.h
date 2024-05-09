@@ -7,6 +7,19 @@
 
 #include <stdint.h>
 #include "ipv4.h"
+#include "sock.h"
+
+#undef  INADDR_ANY
+#define INADDR_ANY              (uint32_t)0x00000000
+
+#undef  AF_INET
+#define AF_INET         2
+
+#undef SOCK_RAW
+#define SOCK_RAW        0
+
+#undef IPPROTO_ICMP
+#define IPPROTO_ICMP    1
 
 struct x_in_addr {
     union {
@@ -42,5 +55,10 @@ struct x_sockaddr_in {
  * @param type socket type
  */
 int x_socket(int family, int type, int protocol);
+
+/**
+ * send buf to socket
+ */
+ssize_t x_sendto(int s, const void * buf, size_t len, int flags, const struct x_sockaddr * dest, x_socklen_t dest_len);
 
 #endif //NET_SOCKET_H

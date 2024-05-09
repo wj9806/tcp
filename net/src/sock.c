@@ -1,11 +1,11 @@
 //
 // Created by wj on 2024/5/8.
 //
-#include "net_api.h"
 #include "sock.h"
 #include "sys_plat.h"
 #include "exmsg.h"
 #include "raw.h"
+#include "socket.h"
 
 #define SOCKET_MAX_NR   (RAW_MAX_NR)
 
@@ -117,5 +117,29 @@ net_err_t sock_create_req_in(struct func_msg_t * msg)
     }
     s->sock = sock;
     req->sockfd = get_index(s);
+    return NET_ERR_OK;
+}
+
+net_err_t sock_sendto_req_in(struct func_msg_t * msg)
+{
+    sock_req_t * req = (sock_req_t *)msg->param;
+
+    x_socket_t * s = get_socket(req->sockfd);
+    if (!s)
+    {
+        debug_error(DEBUG_SOCKET, "param error");
+        return NET_ERR_PARAM;
+    }
+
+    sock_t * sock = s->sock;
+    sock_data_t * data = &req->data;
+
+    if (!sock->ops->sendto)
+    {
+        debug_error(DEBUG_SOCKET, "sendto func no impl");
+        return NET_ERR_NONE;
+    }
+    net_err_t err = sock->ops->sendto(sock, data->buf, data->len, data->flags, data->addr, data->addr_len, &data->comp_len);
+
     return NET_ERR_OK;
 }

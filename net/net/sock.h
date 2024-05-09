@@ -16,12 +16,17 @@ struct x_sockaddr;
 typedef int x_socklen_t;
 
 typedef struct {
+    //close socket
     net_err_t (*close) (struct sock_t * s);
+    //send data to socket
     net_err_t (*sendto) (struct sock_t * s, const void * buf, size_t len, int flags,
             const struct x_sockaddr * dest, x_socklen_t dest_len, ssize_t * result_len);
+    //recv data from socket
     net_err_t (*recvfrom) (struct sock_t * s, void * buf, size_t len, int flags,
             const struct x_sockaddr * src, x_socklen_t src_len, ssize_t * result_len);
+    //set options
     net_err_t (*setopt) (struct sock_t * s, int level, int optname, const char * optval, int optlen);
+    //destroy socket
     void (*destroy) (struct sock_t * s);
 } sock_ops_t;
 
@@ -56,9 +61,19 @@ typedef struct {
 } sock_create_t;
 
 typedef struct {
+    const void * buf;
+    size_t len;
+    int flags;
+    const struct x_sockaddr * addr;
+    x_socklen_t addr_len;
+    ssize_t comp_len;
+} sock_data_t;
+
+typedef struct {
     int sockfd;
     union {
         sock_create_t create;
+        sock_data_t data;
     };
 } sock_req_t;
 

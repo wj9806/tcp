@@ -9,22 +9,12 @@
 #include "tools.h"
 #include "socket.h"
 
-#undef  INADDR_ANY
-#define INADDR_ANY              (uint32_t)0x00000000
-
-#undef  AF_INET
-#define AF_INET         2
-
-#undef SOCK_RAW
-#define SOCK_RAW        0
-
-#undef IPPROTO_ICMP
-#define IPPROTO_ICMP    0
-
 #undef  sockaddr_in
 #define sockaddr_in x_sockaddr_in
+#define sockaddr    x_sockaddr
 
 #define socket(family, type, protocol)  x_socket(family, type, protocol)
+#define sendto(s, buf, len, flags, dest, dlen)  x_sendto(s, buf, len, flags, dest, dlen)
 
 #define x_htons(v)        swap_u16(v)
 #define x_ntohs(v)        swap_u16(v)

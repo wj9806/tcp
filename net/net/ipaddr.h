@@ -79,4 +79,12 @@ ipaddr_t ipaddr_get_net(const ipaddr_t * ipaddr, const ipaddr_t * netmask);
  */
 int ipaddr_is_match(const ipaddr_t* dest, const ipaddr_t * src, const ipaddr_t * netmask);
 
+/**
+ * is addr null?
+ */
+inline int ipaddr_is_any(ipaddr_t * ipaddr)
+{
+    return ipaddr->q_addr == 0;
+}
+
 #endif //NET_IPADDR_H
