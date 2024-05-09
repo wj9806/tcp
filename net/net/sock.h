@@ -15,6 +15,17 @@ struct sock_t;
 struct x_sockaddr;
 typedef int x_socklen_t;
 
+#define SOCK_WAIT_READ    (1<<0)
+#define SOCK_WAIT_WRITE   (1<<1)
+#define SOCK_WAIT_CONN    (1<<2)
+#define SOCK_WAIT_ALL     (SOCK_WAIT_READ | SOCK_WAIT_WRITE | SOCK_WAIT_CONN)
+
+typedef struct {
+    sys_sem_t sem;
+    net_err_t err;
+    int waiting;
+} sock_wait_t;
+
 typedef struct {
     //close socket
     net_err_t (*close) (struct sock_t * s);
@@ -23,7 +34,7 @@ typedef struct {
             const struct x_sockaddr * dest, x_socklen_t dest_len, ssize_t * result_len);
     //recv data from socket
     net_err_t (*recvfrom) (struct sock_t * s, void * buf, size_t len, int flags,
-            const struct x_sockaddr * src, x_socklen_t src_len, ssize_t * result_len);
+            const struct x_sockaddr * src, x_socklen_t * src_len, ssize_t * result_len);
     //set options
     net_err_t (*setopt) (struct sock_t * s, int level, int optname, const char * optval, int optlen);
     //destroy socket
@@ -42,6 +53,10 @@ typedef struct sock_t {
     int err;
     int rcv_tmo;
     int send_tmo;
+
+    sock_wait_t * rcv_wait;
+    sock_wait_t * snd_wait;
+    sock_wait_t * conn_wait;
 
     node_t node;
 } sock_t;
@@ -65,20 +80,46 @@ typedef struct {
     size_t len;
     int flags;
     const struct x_sockaddr * addr;
-    x_socklen_t addr_len;
+    x_socklen_t * addr_len;
     ssize_t comp_len;
 } sock_data_t;
 
 typedef struct {
+    int level;
+    int optname;
+    const char * optval;
+    int len;
+} sock_opt_t;
+
+typedef struct {
+    sock_wait_t * wait;
+    int wait_tmo;
     int sockfd;
     union {
         sock_create_t create;
         sock_data_t data;
+        sock_opt_t opt;
     };
 } sock_req_t;
 
 net_err_t socket_init();
 
 net_err_t sock_init(sock_t * sock, int family, int protocol, const sock_ops_t * ops);
+
+void sock_uninit(sock_t * sock);
+
+void sock_wakeup(sock_t * sock, int type, int err);
+
+net_err_t sock_wait_init(sock_wait_t * wait);
+
+void sock_wait_destroy(sock_wait_t * wait);
+
+void sock_wait_add(sock_wait_t * wait, int tmo, sock_req_t * req);
+
+net_err_t sock_wait_enter(sock_wait_t * wait, int tmo);
+
+void sock_wait_leave(sock_wait_t * wait, net_err_t err);
+
+net_err_t sock_setopt(struct sock_t * s, int level, int optname, const char * optval, int optlen);
 
 #endif //NET_SOCK_H

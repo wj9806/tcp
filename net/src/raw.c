@@ -7,6 +7,7 @@
 #include "mblock.h"
 #include "ipv4.h"
 #include "socket.h"
+#include "sock.h"
 
 static raw_t raw_tbl[RAW_MAX_NR];
 static mblock_t raw_mblock;
@@ -57,10 +58,47 @@ static net_err_t raw_sendto(struct sock_t * s, const void * buf, size_t len, int
     return err;
 }
 
+static net_err_t raw_recvfrom(struct sock_t * s, void * buf, size_t len, int flags,
+                    const struct x_sockaddr * src, x_socklen_t * src_len, ssize_t * result_len)
+{
+    raw_t * raw = (raw_t*)s;
+
+    node_t * first = list_remove_first(&raw->recv_list);
+    if (!first)
+    {
+        *result_len = 0;
+        return NET_ERR_NEED_WAIT;
+    }
+    pktbuf_t * pktbuf = list_node_parent(first, pktbuf_t, node);
+    ipv4_hdr_t * iphdr = (ipv4_hdr_t *) pktbuf_data(pktbuf);
+    struct x_sockaddr_in * addr = (struct x_sockaddr_in*)src;
+    plat_memset(addr, 0, sizeof(struct x_sockaddr_in));
+    addr->sin_family = AF_INET;
+    addr->sin_port = 0;
+    plat_memcpy(&addr->sin_addr, iphdr->src_ip, IPV4_ADDR_SIZE);
+
+    int size = (pktbuf->total_size > (int)len) ? (int)len : pktbuf->total_size;
+
+    pktbuf_reset_access(pktbuf);
+    net_err_t err = pktbuf_read(pktbuf, buf, size);
+    if (err < 0)
+    {
+        pktbuf_free(pktbuf);
+        debug_error(DEBUG_RAW, "pktbuf read failed");
+        return err;
+    }
+
+    pktbuf_free(pktbuf);
+    *result_len = size;
+    return NET_ERR_OK;
+}
+
 sock_t * raw_create(int family, int protocol)
 {
     static const sock_ops_t raw_ops = {
-            .sendto = raw_sendto
+            .sendto = raw_sendto,
+            .recvfrom = raw_recvfrom,
+            .setopt = sock_setopt,
     };
     raw_t * raw = mblock_alloc(&raw_mblock, -1);
     if (!raw)
@@ -76,6 +114,73 @@ sock_t * raw_create(int family, int protocol)
         mblock_free(&raw_mblock, raw);
         return (sock_t *)0;
     }
+    list_init(&raw->recv_list);
+
+    raw->base.rcv_wait = &raw->rcv_wait;
+    if (sock_wait_init(raw->base.rcv_wait))
+    {
+        debug_error(DEBUG_RAW, "create rcv wait failed");
+        goto create_failed;
+    }
     list_insert_last(&raw_list, &raw->base.node);
     return (sock_t*)raw;
+
+    create_failed:
+    sock_uninit(&raw->base);
+    return (sock_t*)0;
+}
+
+//find suitable raw_t
+static raw_t * raw_find(ipaddr_t * src, ipaddr_t * dest, uint8_t protocol)
+{
+    node_t * node;
+
+    list_for_each(node, &raw_list)
+    {
+        raw_t * raw = (raw_t *)list_node_parent(node, sock_t, node);
+        if (raw->base.protocol && (raw->base.protocol != protocol))
+        {
+            continue;
+        }
+
+        if (!ipaddr_is_any(&raw->base.remote_ip) && !ipaddr_is_equal(&raw->base.remote_ip, src))
+        {
+            continue;
+        }
+
+        if (!ipaddr_is_any(&raw->base.local_ip) && !ipaddr_is_equal(&raw->base.local_ip, dest))
+        {
+            continue;
+        }
+
+        return raw;
+    }
+    return (raw_t *)0;
+}
+
+net_err_t raw_in(pktbuf_t * pktbuf)
+{
+    ipv4_hdr_t * iphdr = (ipv4_hdr_t *) pktbuf_data(pktbuf);
+    ipaddr_t src, dest;
+
+    ipaddr_from_buf(&dest, iphdr->dest_ip);
+    ipaddr_from_buf(&src, iphdr->src_ip);
+
+    raw_t * raw = raw_find(&src, &dest, iphdr->protocol);
+    if (!raw)
+    {
+        debug_warn(DEBUG_RAW, "no raw for req");
+        return NET_ERR_UNREACHABLE;
+    }
+
+    if (list_count(&raw->recv_list) < RAW_MAX_RECV)
+    {
+        list_insert_last(&raw->recv_list, &pktbuf->node);
+        sock_wakeup((sock_t *)raw, SOCK_WAIT_READ, NET_ERR_OK);
+    }
+    else
+    {
+        pktbuf_free(pktbuf);
+    }
+    return NET_ERR_OK;
 }

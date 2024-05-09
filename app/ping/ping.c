@@ -45,7 +45,10 @@ void ping_run(ping_t * ping, const char * dest, int count, int size, int interva
         goto end;
     }
 
-    int tmo = 5000;
+    //int tmo = 5000;
+    struct timeval tmo;
+    tmo.tv_sec = 3;
+    tmo.tv_usec = 0;
     setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tmo, sizeof(tmo));
 
     struct sockaddr_in addr;
@@ -79,7 +82,7 @@ void ping_run(ping_t * ping, const char * dest, int count, int size, int interva
 
         do {
             struct sockaddr from_addr;
-            int addr_len = sizeof(from_addr);
+            socklen_t addr_len = sizeof(from_addr);
             size = recvfrom(s, (char *)&ping->reply, sizeof(ping->reply), 0, &from_addr, &addr_len);
             if (size < 0)
             {

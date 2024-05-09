@@ -6,6 +6,7 @@
 #include "debug.h"
 #include "ipv4.h"
 #include "protocol.h"
+#include "raw.h"
 
 #if DEBUG_DISP_ENABLED(DEBUG_ICMP)
 static void display_icmp_pkt(char * title, icmp_pkt_t * pkt)
@@ -32,7 +33,6 @@ static net_err_t is_pkt_ok(icmp_pkt_t * icmp_pkt, int total_size, pktbuf_t * buf
         debug_warn(DEBUG_ICMP, "size error");
         return NET_ERR_SIZE;
     }
-    pktbuf_reset_access(buf);
     uint16_t checksum = pktbuf_checksum16(buf, total_size, 0, 1);
     if (checksum != 0)
     {
@@ -72,13 +72,8 @@ net_err_t icmpv4_in(ipaddr_t * src_ip, ipaddr_t * netif_ip, pktbuf_t * buf)
         return err;
     }
 
-    err = pktbuf_remove_header(buf, iphdr_size);
-    if (err < 0)
-    {
-        debug_error(DEBUG_IP, "remove ip header failed");
-        return err;
-    }
-    icmp_pkt_t * icmp_pkt = (icmp_pkt_t *) pktbuf_data(buf);
+    icmp_pkt_t * icmp_pkt = (icmp_pkt_t *) (pktbuf_data(buf) + iphdr_size);
+    pktbuf_seek(buf, iphdr_size);
     if ((err = is_pkt_ok(icmp_pkt, buf->total_size, buf)) < 0)
     {
         debug_warn(DEBUG_ICMP, "icmp pkt error");
@@ -87,13 +82,24 @@ net_err_t icmpv4_in(ipaddr_t * src_ip, ipaddr_t * netif_ip, pktbuf_t * buf)
     display_icmp_pkt("icmp in", icmp_pkt);
     switch (icmp_pkt->hdr.type) {
         case ICMPv4_ECHO_REQUEST:
+            err = pktbuf_remove_header(buf, iphdr_size);
+            if (err < 0)
+            {
+                debug_error(DEBUG_IP, "remove ip header failed");
+                return err;
+            }
+            pktbuf_reset_access(buf);
+
             return icmpv4_echo_reply(src_ip, netif_ip, buf);
-            break;
         default:
-            pktbuf_free(buf);
-            break;
+            err = raw_in(buf);
+            if (err < 0)
+            {
+                debug_error(DEBUG_ICMP, "raw in failed");
+                return err;
+            }
+            return NET_ERR_OK;
     }
-    return NET_ERR_OK;
 }
 
 net_err_t icmpv4_out_unreachable(ipaddr_t * dest_ip, ipaddr_t * src, uint8_t code, pktbuf_t * buf)

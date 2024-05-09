@@ -9,6 +9,7 @@
 #include "icmpv4.h"
 #include "mblock.h"
 #include "timer.h"
+#include "raw.h"
 
 static uint16_t packet_id = 0;
 static ip_frag_t frag_array[IP_FRAGS_MAX_NR];
@@ -402,7 +403,14 @@ static net_err_t ip_normal_in(netif_t * netif, pktbuf_t * buf, ipaddr_t * src_ip
         case NET_PROTOCOL_TCP:
             break;
         default:
-            debug_error(DEBUG_IP, "unknown protocol");
+            debug_warn(DEBUG_IP, "unknown protocol");
+            err = raw_in(buf);
+            if (err < 0)
+            {
+                debug_error(DEBUG_IP, "raw in failed:%d", err);
+                return err;
+            }
+            break;
     }
     return NET_ERR_UNREACHABLE;
 }
