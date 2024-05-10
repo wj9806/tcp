@@ -52,6 +52,7 @@
 #define IP_FRAG_MAX_BUF_NR      10
 #define IP_FRAG_SCAN_PERIOD     1
 #define IP_FRAG_TMO             10
+#define IP_RTTABLE_SIZE         20
 
 #define RAW_MAX_NR              10
 #define RAW_MAX_RECV            50

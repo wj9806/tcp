@@ -18,6 +18,10 @@ static mblock_t frag_mblock;
 static list_t frag_list;
 static net_timer_t frag_timer;
 
+static list_t rt_list;
+static rentry_t rt_table[IP_RTTABLE_SIZE];
+static mblock_t rt_block;
+
 static int get_data_size(ipv4_pkt_t * pkt)
 {
     return pkt->hdr.total_len - ipv4_hdr_size(pkt);
@@ -136,6 +140,15 @@ static net_err_t frag_init()
     return NET_ERR_OK;
 }
 
+/**
+ * init the route table
+ */
+static void rt_init()
+{
+    list_init(&rt_list);
+    mblock_init(&rt_block, rt_table, sizeof(rentry_t), IP_RTTABLE_SIZE, LOCKER_NONE);
+}
+
 net_err_t ipv4_init()
 {
     debug_info(DEBUG_IP, "init ipv4");
@@ -146,7 +159,7 @@ net_err_t ipv4_init()
         debug_error(DEBUG_IP, "frag init failed");
         return err;
     }
-
+    rt_init();
     return NET_ERR_OK;
 }
 

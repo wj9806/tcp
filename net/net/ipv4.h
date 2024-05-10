@@ -80,6 +80,14 @@ typedef struct {
     node_t node;
 } ip_frag_t;
 
+typedef struct {
+    ipaddr_t net;
+    ipaddr_t mask;
+    ipaddr_t next_hop;
+    netif_t * netif;
+    node_t node;
+} rentry_t;
+
 /**
  * init ipv4
  */
