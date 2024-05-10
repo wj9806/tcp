@@ -9,6 +9,7 @@
 #include "timer.h"
 #include "ping/ping.h"
 #include "exmsg.h"
+#include "echo/udp_echo_client.h"
 
 #define DEBUG_TEST    DEBUG_LEVEL_INFO
 
@@ -268,13 +269,15 @@ int main()
     netdev_init();
     net_start();
 
+    udp_echo_client_start(friend0_ip, 1000);
+
     int arg = 0x12345;
     net_err_t err = exmsg_func_exec(test_func, &arg);
 
     ping_t ping;
     //ping_run(&ping, "223.5.5.5", 4, 64, 1000);
     ping_run(&ping, friend0_ip, 1, 64, 1000);
-    ping_run(&ping, "223.5.5.5", 1, 64, 1000);
+    //ping_run(&ping, "223.5.5.5", 1, 64, 1000);
 
     char cmd[32], param[32];
     for(;;)
