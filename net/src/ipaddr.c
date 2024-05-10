@@ -98,3 +98,17 @@ int ipaddr_is_match(const ipaddr_t* dest, const ipaddr_t * src, const ipaddr_t *
     }
     return ipaddr_is_equal(dest, src);
 }
+
+int ipaddr_1_cnt(ipaddr_t * ip)
+{
+    int cnt = 0;
+    uint32_t addr = ip->q_addr;
+    while (addr)
+    {
+        if (addr & 0x80000000)
+        {
+            cnt++;
+        }
+        addr << 1;
+    }
+}

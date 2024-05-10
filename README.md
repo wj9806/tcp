@@ -1,2 +1,2 @@
-# tcp
-TCP implementation based on C language
+# tcp/ip
+TCP/IP implementation based on C language

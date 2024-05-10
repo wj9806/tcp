@@ -87,4 +87,9 @@ inline int ipaddr_is_any(ipaddr_t * ipaddr)
     return ipaddr->q_addr == 0;
 }
 
+/**
+ * calculate ip the 1 count
+ */
+int ipaddr_1_cnt(ipaddr_t * ip);
+
 #endif //NET_IPADDR_H

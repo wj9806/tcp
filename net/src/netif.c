@@ -5,8 +5,7 @@
 #include "mblock.h"
 #include "pktbuf.h"
 #include "exmsg.h"
-#include "protocol.h"
-#include "ether.h"
+#include "ipv4.h"
 
 static netif_t netif_buffer[NETIF_DEV_CNT];
 static mblock_t netif_block;
@@ -225,6 +224,13 @@ net_err_t netif_set_active(netif_t * netif)
         }
     }
 
+    ipaddr_t ip = ipaddr_get_net(&netif->ipaddr, &netif->netmask);
+    rt_add(&ip, &netif->netmask, ipaddr_get_any(), netif);
+
+    ipaddr_t ip2;
+    ipaddr_from_str(&ip2, "255.255.255.255");
+    rt_add(&netif->ipaddr, &ip2, ipaddr_get_any(), netif);
+
     netif->state = NETIF_ACTIVE;
     display_netif_list();
     return NET_ERR_OK;
@@ -255,7 +261,16 @@ net_err_t netif_set_deactive(netif_t * netif)
     if (netif_default == netif)
     {
         netif_default = (netif_t *) 0;
+        rt_remove(ipaddr_get_any(), ipaddr_get_any());
     }
+
+    ipaddr_t ip = ipaddr_get_net(&netif->ipaddr, &netif->netmask);
+    rt_remove(&ip, &netif->netmask);
+
+    ipaddr_t ip2;
+    ipaddr_from_str(&ip2, "255.255.255.255");
+    rt_remove(&netif->ipaddr, &ip2);
+
     netif->state = NETIF_OPENED;
     display_netif_list();
     return NET_ERR_OK;
@@ -280,6 +295,14 @@ net_err_t netif_close(netif_t * netif)
 void netif_set_default(netif_t * netif)
 {
     netif_default = netif;
+    if (!ipaddr_is_any(&netif->gateway))
+    {
+        if (netif_default)
+        {
+            rt_remove(ipaddr_get_any(), ipaddr_get_any());
+        }
+        rt_add(ipaddr_get_any(), ipaddr_get_any(), &netif->gateway, netif);
+    }
 }
 
 netif_t * netif_get_default()

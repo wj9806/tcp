@@ -83,6 +83,7 @@ typedef struct {
 typedef struct {
     ipaddr_t net;
     ipaddr_t mask;
+    int mask_1_cnt;
     ipaddr_t next_hop;
     netif_t * netif;
     node_t node;
@@ -120,5 +121,20 @@ static inline void ipv4_set_hdr_size(ipv4_pkt_t * pkt, int len)
 {
     pkt->hdr.shdr = len / 4;
 }
+
+/**
+ * add rt entry
+ */
+void rt_add(ipaddr_t * net, ipaddr_t * mask, ipaddr_t * next_hop, netif_t * netif);
+
+/**
+ * remove rt entry
+ */
+void rt_remove(ipaddr_t * net, ipaddr_t * mask);
+
+/**
+ * find rt entry
+ */
+rentry_t * rt_find(ipaddr_t * ip);
 
 #endif //NET_IPV4_H

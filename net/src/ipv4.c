@@ -22,6 +22,25 @@ static list_t rt_list;
 static rentry_t rt_table[IP_RTTABLE_SIZE];
 static mblock_t rt_block;
 
+#if DEBUG_DISP_ENABLED(DEBUG_IP)
+void rt_list_display()
+{
+    plat_printf("------------rt table---------------\n");
+
+    node_t * node;
+    list_for_each(node, &rt_list)
+    {
+        rentry_t * entry = (rentry_t*) list_node_parent(node, rentry_t, node);
+        debug_dump_ip("net: ", &entry->net);
+        debug_dump_ip("  mask: ", &entry->mask);
+        debug_dump_ip("  next_hop: ", &entry->next_hop);
+        plat_printf("  netif: %s\n", entry->netif->name);
+    }
+}
+#else
+#define rt_nlist_display()
+#endif
+
 static int get_data_size(ipv4_pkt_t * pkt)
 {
     return pkt->hdr.total_len - ipv4_hdr_size(pkt);
@@ -590,4 +609,57 @@ net_err_t ipv4_out(uint8_t protocol, ipaddr_t * dest, ipaddr_t * src, pktbuf_t *
         return err;
     }
     return NET_ERR_OK;
+}
+
+void rt_add(ipaddr_t * net, ipaddr_t * mask, ipaddr_t * next_hop, netif_t * netif)
+{
+    rentry_t * entry = mblock_alloc(&rt_block, -1);
+    if (!entry)
+    {
+        debug_warn(DEBUG_IP, "alloc rt entry failed");
+        return;
+    }
+
+    ipaddr_copy(&entry->net, net);
+    ipaddr_copy(&entry->mask, mask);
+    ipaddr_copy(&entry->next_hop, next_hop);
+    entry->netif = netif;
+    entry->mask_1_cnt = ipaddr_1_cnt(mask);
+    list_insert_last(&rt_list, &entry->node);
+    rt_list_display();
+}
+
+void rt_remove(ipaddr_t * net, ipaddr_t * mask)
+{
+    node_t * node;
+    list_for_each(node, &rt_list)
+    {
+        rentry_t * entry = list_node_parent(node, rentry_t, node);
+        if (ipaddr_is_equal(&entry->net, net) && ipaddr_is_equal(&entry->mask, mask))
+        {
+            list_remove(&rt_list, node);
+            return;
+        }
+    }
+    rt_list_display();
+}
+
+rentry_t * rt_find(ipaddr_t * ip)
+{
+    rentry_t * e = (rentry_t *)0;
+    node_t * node;
+    list_for_each(node, &rt_list)
+    {
+        rentry_t * entry = list_node_parent(node, rentry_t, node);
+        ipaddr_t net = ipaddr_get_net(ip, &entry->mask);
+        if (!ipaddr_is_equal(&net, &entry->net))
+        {
+            continue;
+        }
+        if (!e || (e->mask_1_cnt < entry->mask_1_cnt))
+        {
+            e = entry;
+        }
+    }
+    return e;
 }
