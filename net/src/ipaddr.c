@@ -109,6 +109,7 @@ int ipaddr_1_cnt(ipaddr_t * ip)
         {
             cnt++;
         }
-        addr << 1;
+        addr <<= 1;
     }
+    return cnt;
 }

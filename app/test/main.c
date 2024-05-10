@@ -272,7 +272,10 @@ int main()
     net_err_t err = exmsg_func_exec(test_func, &arg);
 
     ping_t ping;
-    ping_run(&ping, "223.5.5.5", 4, 64, 1000);
+    //ping_run(&ping, "223.5.5.5", 4, 64, 1000);
+    ping_run(&ping, friend0_ip, 1, 64, 1000);
+    ping_run(&ping, "223.5.5.5", 1, 64, 1000);
+
     char cmd[32], param[32];
     for(;;)
     {

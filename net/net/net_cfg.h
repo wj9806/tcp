@@ -18,7 +18,7 @@
 #define DEBUG_TOOLS             DEBUG_LEVEL_ERROR
 #define DEBUG_TIMER             DEBUG_LEVEL_ERROR
 #define DEBUG_ARP               DEBUG_LEVEL_ERROR
-#define DEBUG_IP                DEBUG_LEVEL_INFO
+#define DEBUG_IP                DEBUG_LEVEL_ERROR
 #define DEBUG_ICMP              DEBUG_LEVEL_ERROR
 #define DEBUG_SOCKET            DEBUG_LEVEL_ERROR
 #define DEBUG_RAW               DEBUG_LEVEL_ERROR

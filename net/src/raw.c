@@ -65,7 +65,7 @@ static net_err_t raw_sendto(struct sock_t * s, const void * buf, size_t len, int
         debug_error(DEBUG_RAW, "copy data error");
         goto end_send_to;
     }
-    err = ipv4_out(s->protocol, &dest_ip, &netif_get_default()->ipaddr, pkt_buf);
+    err = ipv4_out(s->protocol, &dest_ip, &s->local_ip, pkt_buf);
     if (err < 0)
     {
         debug_error(DEBUG_RAW, "send error");
