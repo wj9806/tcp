@@ -17,9 +17,13 @@
 
 #undef SOCK_RAW
 #define SOCK_RAW        0
+#undef SOCK_DGRAM
+#define SOCK_DGRAM      1
 
 #undef IPPROTO_ICMP
 #define IPPROTO_ICMP    1
+#undef IPPROTO_UDP
+#define IPPROTO_UDP    17
 
 #undef SOL_SOCKET
 #define SOL_SOCKET 0

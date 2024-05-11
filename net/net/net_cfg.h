@@ -22,6 +22,7 @@
 #define DEBUG_ICMP              DEBUG_LEVEL_ERROR
 #define DEBUG_SOCKET            DEBUG_LEVEL_ERROR
 #define DEBUG_RAW               DEBUG_LEVEL_ERROR
+#define DEBUG_UDP               DEBUG_LEVEL_INFO
 
 
 #define EXMSG_MSG_CNT           10
@@ -56,5 +57,8 @@
 
 #define RAW_MAX_NR              10
 #define RAW_MAX_RECV            50
+
+#define UDP_MAX_NR              10
+#define UDP_MAX_RECV            50
 
 #endif //NET_NET_CFG_H

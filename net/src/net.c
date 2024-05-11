@@ -12,6 +12,7 @@
 #include "icmpv4.h"
 #include "sock.h"
 #include "raw.h"
+#include "udp.h"
 
 net_err_t net_init(void)
 {
@@ -28,6 +29,7 @@ net_err_t net_init(void)
     icmpv4_init();
     socket_init();
     raw_init();
+    udp_init();
     loop_init();
     return NET_ERR_OK;
 }

@@ -4,6 +4,7 @@
 
 #include "udp_echo_server.h"
 #include "sys_plat.h"
+#include "net_api.h"
 
 static uint16_t server_port;
 
@@ -13,7 +14,7 @@ void udp_echo_server (void * arg) {
 
     int s = socket(AF_INET, SOCK_DGRAM, 0);
     if (s < 0) {
-        plat_printf("udp echo server: open socket error");
+        plat_printf("udp echo server: open socket error\n");
         goto end;
     }
 
@@ -21,28 +22,12 @@ void udp_echo_server (void * arg) {
     struct sockaddr_in server_addr;
     plat_memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    server_addr.sin_addr.s_addr = INADDR_ANY;
     server_addr.sin_port = htons(server_port);
-    if (bind(s, (const struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        plat_printf("bind error");
-        goto end;
-    }
-
-    s = socket(AF_INET, SOCK_DGRAM, 0);
-    if (s < 0) {
-        plat_printf("udp echo server: open socket error");
-        goto end;
-    }
-
-    // struct sockaddr
-    plat_memset(&server_addr, 0, sizeof(server_addr));
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = inet_addr("192.168.74.1");
-    server_addr.sin_port = htons(server_port);
-    if (bind(s, (const struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        plat_printf("bind error");
-        goto end;
-    }
+//    if (bind(s, (const struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+//        plat_printf("bind error");
+//        goto end;
+//    }
 
     while (1) {
         struct sockaddr_in client_addr;
