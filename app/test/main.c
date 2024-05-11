@@ -270,8 +270,8 @@ int main()
     netdev_init();
     net_start();
 
-    //udp_echo_client_start(friend0_ip, 1000);
-    udp_echo_server_start(2000);
+    udp_echo_client_start(friend0_ip, 1000);
+    //udp_echo_server_start(2000);
 
     int arg = 0x12345;
     net_err_t err = exmsg_func_exec(test_func, &arg);

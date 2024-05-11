@@ -4,16 +4,12 @@
 
 #include "udp_echo_client.h"
 #include "sys_plat.h"
+#include "net_api.h"
 
 int udp_echo_client_start (const char * ip, int port)
 {
     plat_printf("udp echo client, ip: %s, port: %d\n", ip, port);
-
-    //The Windows environment starts the network library
-    WSADATA wsadata;
-    WSAStartup(MAKEWORD(2, 2), &wsadata);
-
-    SOCKET s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    int s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (s < 0)
     {
         plat_printf("udp echo client: open socket failed\n");
@@ -52,12 +48,12 @@ int udp_echo_client_start (const char * ip, int port)
         plat_printf(">>");
     }
 
-    closesocket(s);
+    close(s);
     return 1;
     end:
     if (s >= 0)
     {
-        closesocket(s);
+        close(s);
     }
     return -1;
 }
