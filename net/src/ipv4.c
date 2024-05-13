@@ -10,6 +10,7 @@
 #include "mblock.h"
 #include "timer.h"
 #include "raw.h"
+#include "udp.h"
 
 static uint16_t packet_id = 0;
 static ip_frag_t frag_array[IP_FRAGS_MAX_NR];
@@ -421,22 +422,35 @@ static net_err_t ip_normal_in(netif_t * netif, pktbuf_t * buf, ipaddr_t * src_ip
     display_ip_pkt(pkt);
     switch (pkt->hdr.protocol) {
         case NET_PROTOCOL_ICMPv4:
+        {
             net_err_t err = icmpv4_in(src_ip, &netif->ipaddr, buf);
-            if (err < 0)
-            {
+            if (err < 0) {
                 debug_warn(DEBUG_IP, "icmp in failed");
                 return err;
             }
             break;
+        }
         case NET_PROTOCOL_UDP:
-            iphdr_htons(pkt);
-            icmpv4_out_unreachable(dest_ip, &netif->ipaddr, ICMPv4_UNREACHABLE_PORT, buf);
-            break;
+        {
+            net_err_t err = udp_in(buf, src_ip, dest_ip);
+            if (err < 0)
+            {
+                debug_warn(DEBUG_IP, "udp in error");
+
+                if (err == NET_ERR_UNREACHABLE)
+                {
+                    iphdr_htons(pkt);
+                    icmpv4_out_unreachable(dest_ip, &netif->ipaddr, ICMPv4_UNREACHABLE_PORT, buf);
+                }
+                return err;
+            }
+            return NET_ERR_OK;
+        }
         case NET_PROTOCOL_TCP:
             break;
         default:
             debug_warn(DEBUG_IP, "unknown protocol");
-            err = raw_in(buf);
+            net_err_t err = raw_in(buf);
             if (err < 0)
             {
                 debug_error(DEBUG_IP, "raw in failed:%d", err);

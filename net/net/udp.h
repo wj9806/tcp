@@ -11,6 +11,11 @@
 #pragma pack(1)
 
 typedef struct {
+    ipaddr_t from;
+    uint16_t port;
+} udp_from_t;
+
+typedef struct {
     uint16_t src_port;
     uint16_t dest_port;
     uint16_t total_len;
@@ -44,5 +49,10 @@ sock_t * udp_create(int family, int protocol);
  * output udp packet
  */
 net_err_t udp_out(ipaddr_t * dest, uint16_t dport, ipaddr_t * src, uint16_t sport, pktbuf_t * buf);
+
+/**
+ * input udp packet
+ */
+net_err_t udp_in(pktbuf_t * buf, ipaddr_t * src_ip, ipaddr_t * dest_ip);
 
 #endif //NET_UDP_H
