@@ -7,6 +7,7 @@
 #include "net_cfg.h"
 #include "pktbuf.h"
 #include "net_api.h"
+#include "protocol.h"
 
 static udp_t udp_tbl[UDP_MAX_NR];
 static mblock_t udp_mblock;
@@ -18,6 +19,38 @@ net_err_t udp_init()
     list_init(&udp_list);
     mblock_init(&udp_mblock, udp_tbl, sizeof(udp_t), UDP_MAX_NR, LOCKER_NONE);
     return NET_ERR_OK;
+}
+
+static int is_port_used(int port)
+{
+    node_t * node;
+    list_for_each(node, &udp_list)
+    {
+        sock_t * sock = (sock_t *) list_node_parent(node, sock_t, node);
+        if (sock->local_port == port)
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+//dynamic alloc available port
+static net_err_t alloc_port(sock_t * sock)
+{
+    static int search_index = NET_PORT_DYN_START;
+    for (int i = NET_PORT_DYN_START; i < NET_PORT_DYN_END; ++i)
+    {
+        int port = search_index++;
+        if (!is_port_used(port))
+        {
+            sock->local_port = port;
+            return NET_ERR_OK;
+        }
+    }
+
+    return NET_ERR_NONE;
 }
 
 static net_err_t udp_sendto(struct sock_t * s, const void * buf, size_t len, int flags,
@@ -39,6 +72,12 @@ static net_err_t udp_sendto(struct sock_t * s, const void * buf, size_t len, int
         return NET_ERR_PARAM;
     }
 
+    if (!s->local_port && ((s->err = alloc_port(s)) < 0))
+    {
+        debug_error(DEBUG_UDP, "no port available");
+        return NET_ERR_NONE;
+    }
+
     pktbuf_t * pkt_buf = pktbuf_alloc((int)len);
     if (!pkt_buf)
     {
@@ -52,7 +91,13 @@ static net_err_t udp_sendto(struct sock_t * s, const void * buf, size_t len, int
         goto end_send_to;
     }
 
-    //
+    err = udp_out(&dest_ip, dport, &s->local_ip, s->local_port, pkt_buf);
+    if (err < 0)
+    {
+        debug_error(DEBUG_UDP, "send error");
+        goto end_send_to;
+    }
+
     *result_len = (ssize_t)len;
     return NET_ERR_OK;
     end_send_to:
@@ -94,4 +139,41 @@ sock_t * udp_create(int family, int protocol)
     create_failed:
     sock_uninit(&udp->base);
     return (sock_t*)0;
+}
+
+net_err_t udp_out(ipaddr_t * dest, uint16_t dport, ipaddr_t * src, uint16_t sport, pktbuf_t * buf)
+{
+    if (ipaddr_is_any(src))
+    {
+        rentry_t * rt = rt_find(dest);
+        if (rt == (rentry_t *)0)
+        {
+            debug_error(DEBUG_UDP, "no route");
+            return NET_ERR_UNREACHABLE;
+        }
+
+        src = &rt->netif->ipaddr;
+    }
+
+    net_err_t err = pktbuf_add_header(buf, sizeof(udp_hdr_t), 1);
+    if (err < 0)
+    {
+        debug_error(DEBUG_UDP, "add header failed");
+        return NET_ERR_SIZE;
+    }
+
+    udp_hdr_t * udp_hdr = (udp_hdr_t *) pktbuf_data(buf);
+    udp_hdr->src_port = x_htons(sport);
+    udp_hdr->dest_port = x_htons(dport);
+    udp_hdr->total_len = x_htons(buf->total_size);
+    udp_hdr->checksum = 0;
+    udp_hdr->checksum = checksum_peso(buf, dest, src, NET_PROTOCOL_UDP);
+
+    err = ipv4_out(NET_PROTOCOL_UDP, dest, src, buf);
+    if (err < 0)
+    {
+        debug_error(DEBUG_UDP, "udp out err");
+        return err;
+    }
+    return NET_ERR_OK;
 }

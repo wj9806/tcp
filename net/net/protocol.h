@@ -5,6 +5,9 @@
 #ifndef NET_PROTOCOL_H
 #define NET_PROTOCOL_H
 
+#define NET_PORT_DYN_START  1024
+#define NET_PORT_DYN_END    65535
+
 typedef enum {
     NET_PROTOCOL_ARP = 0x0806,
     NET_PROTOCOL_IPV4 = 0x0800,

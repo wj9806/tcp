@@ -7,6 +7,8 @@
 
 #include "stdint.h"
 #include "net_cfg.h"
+#include "pktbuf.h"
+#include "ipaddr.h"
 
 static inline uint16_t swap_u16(uint16_t v) {
     uint16_t r = ((v & 0xFF) << 8) | ((v >> 8) & 0xFF);
@@ -41,5 +43,7 @@ net_err_t tools_init(void);
  * compute the checksum16
  */
 uint16_t checksum16(int offset, void * buf, uint16_t len, uint32_t pre_sum, int complement);
+
+uint16_t checksum_peso(pktbuf_t * buf, const ipaddr_t * dest, const ipaddr_t * src, uint8_t protocol);
 
 #endif //NET_TOOLS_H
