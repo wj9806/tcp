@@ -203,6 +203,7 @@ sock_t * udp_create(int family, int protocol)
 {
     static const sock_ops_t udp_ops = {
             .setopt = sock_setopt,
+            .send = sock_send,
             .sendto = udp_sendto,
             .recvfrom = udp_recvfrom,
             .close = udp_close,

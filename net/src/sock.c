@@ -223,7 +223,49 @@ net_err_t sock_sendto_req_in(struct func_msg_t * msg)
         debug_error(DEBUG_SOCKET, "sendto func no impl");
         return NET_ERR_NONE;
     }
-    net_err_t err = sock->ops->sendto(sock, data->buf, data->len, data->flags, data->addr, *data->addr_len, &data->comp_len);
+    net_err_t err = sock->ops->send(sock, data->buf, data->len, data->flags, &data->comp_len);
+
+    if (err == NET_ERR_NEED_WAIT)
+    {
+        if (sock->snd_wait)
+        {
+            sock_wait_add(sock->snd_wait, sock->send_tmo, req);
+        }
+    }
+
+    return err;
+}
+
+net_err_t sock_send(struct sock_t * s, const void * buf, size_t len, int flags, ssize_t * result_len)
+{
+    struct x_sockaddr_in dest;
+    dest.sin_family = s->family;
+    dest.sin_port = x_htons(s->remote_port);
+    ipaddr_to_buf(&s->remote_ip, dest.sin_addr.addr_array);
+
+    return s->ops->sendto(s, buf, len, flags, (const struct x_sockaddr *)&dest, sizeof(dest), result_len);
+}
+
+net_err_t sock_send_req_in(struct func_msg_t * msg)
+{
+    sock_req_t * req = (sock_req_t *)msg->param;
+
+    x_socket_t * s = get_socket(req->sockfd);
+    if (!s)
+    {
+        debug_error(DEBUG_SOCKET, "param error");
+        return NET_ERR_PARAM;
+    }
+
+    sock_t * sock = s->sock;
+    sock_data_t * data = &req->data;
+
+    if (!sock->ops->send)
+    {
+        debug_error(DEBUG_SOCKET, "send func no impl");
+        return NET_ERR_NONE;
+    }
+    net_err_t err = sock->ops->send(sock, data->buf, data->len, data->flags, &data->comp_len);
 
     if (err == NET_ERR_NEED_WAIT)
     {

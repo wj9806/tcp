@@ -11,6 +11,9 @@ net_err_t sock_create_req_in(struct func_msg_t * msg);
 //send data
 net_err_t sock_sendto_req_in(struct func_msg_t * msg);
 
+//send data
+net_err_t sock_send_req_in(struct func_msg_t * msg);
+
 //recv data
 net_err_t sock_recvfrom_req_in(struct func_msg_t * msg);
 
@@ -70,6 +73,50 @@ ssize_t x_sendto(int s, const void * buf, size_t len, int flags, const struct x_
         req.data.addr_len = &dest_len;
         req.data.comp_len = 0;
         net_err_t err = exmsg_func_exec(sock_sendto_req_in, &req);
+        if (err < 0)
+        {
+            debug_info(DEBUG_SOCKET, "create socket failed");
+            return -1;
+        }
+
+        if (req.wait)
+        {
+            err = sock_wait_enter(req.wait, req.wait_tmo);
+            if (err < 0)
+            {
+                debug_error(DEBUG_SOCKET, "send failed");
+                return err;
+            }
+        }
+        len -= req.data.comp_len;
+        start += req.data.comp_len;
+        send_size += req.data.comp_len;
+    }
+
+    return send_size;
+}
+
+ssize_t x_send(int s, const void * buf, size_t len, int flags)
+{
+    if (!buf || !len)
+    {
+        debug_error(DEBUG_SOCKET, "invalid param");
+        return -1;
+    }
+
+    uint8_t * start = (uint8_t *)buf;
+    ssize_t send_size = 0;
+    while (len > 0)
+    {
+        sock_req_t req;
+        req.sockfd = s;
+        req.wait = (sock_wait_t *)0;
+        req.wait_tmo = 0;
+        req.data.buf = start;
+        req.data.len = len;
+        req.data.flags = flags;
+        req.data.comp_len = 0;
+        net_err_t err = exmsg_func_exec(sock_send_req_in, &req);
         if (err < 0)
         {
             debug_info(DEBUG_SOCKET, "create socket failed");
