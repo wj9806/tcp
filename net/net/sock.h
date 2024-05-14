@@ -39,6 +39,8 @@ typedef struct {
     net_err_t (*setopt) (struct sock_t * s, int level, int optname, const char * optval, int optlen);
     //destroy socket
     void (*destroy) (struct sock_t * s);
+    //connect socket
+    net_err_t (*connect)(struct sock_t * s, const struct x_sockaddr * addr, x_socklen_t len);
 } sock_ops_t;
 
 typedef struct sock_t {
@@ -92,6 +94,11 @@ typedef struct {
 } sock_opt_t;
 
 typedef struct {
+    const struct x_sockaddr * addr;
+    x_socklen_t len;
+} sock_conn_t;
+
+typedef struct {
     sock_wait_t * wait;
     int wait_tmo;
     int sockfd;
@@ -99,6 +106,7 @@ typedef struct {
         sock_create_t create;
         sock_data_t data;
         sock_opt_t opt;
+        sock_conn_t conn;
     };
 } sock_req_t;
 
@@ -121,5 +129,7 @@ net_err_t sock_wait_enter(sock_wait_t * wait, int tmo);
 void sock_wait_leave(sock_wait_t * wait, net_err_t err);
 
 net_err_t sock_setopt(struct sock_t * s, int level, int optname, const char * optval, int optlen);
+
+net_err_t sock_connect(sock_t * sock, const struct x_sockaddr * addr, x_socklen_t len);
 
 #endif //NET_SOCK_H

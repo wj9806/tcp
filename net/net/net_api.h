@@ -15,11 +15,12 @@
 #define socklen_t   x_socklen_t
 #define timeval     x_timeval
 
-#define socket(family, type, protocol)  x_socket(family, type, protocol)
-#define sendto(s, buf, len, flags, dest, dlen)  x_sendto(s, buf, len, flags, dest, dlen)
-#define recvfrom(s, buf, len, flags, src, slen)  x_recvfrom(s, buf, len, flags, src, slen)
-#define setsockopt(s, level, optname, optval, len)  x_setsockopt(s, level, optname, optval, len)
-#define close(s)    x_close(s)
+#define socket(family, type, protocol)                      x_socket(family, type, protocol)
+#define sendto(s, buf, len, flags, dest, dlen)              x_sendto(s, buf, len, flags, dest, dlen)
+#define recvfrom(s, buf, len, flags, src, slen)             x_recvfrom(s, buf, len, flags, src, slen)
+#define setsockopt(s, level, optname, optval, len)          x_setsockopt(s, level, optname, optval, len)
+#define close(s)                                            x_close(s)
+#define connect(s, addr, addr_len)                          x_connect(s, addr, addr_len)
 
 #define x_htons(v)        swap_u16(v)
 #define x_ntohs(v)        swap_u16(v)

@@ -117,7 +117,7 @@ static net_err_t udp_sendto(struct sock_t * s, const void * buf, size_t len, int
     }
 
     uint16_t dport = x_ntohs(addr->sin_port);
-    if (s->remote_port && (s->remote_port == dport))
+    if (s->remote_port && (s->remote_port != dport))
     {
         debug_error(DEBUG_UDP, "invalid port");
         return NET_ERR_PARAM;
@@ -192,13 +192,21 @@ static net_err_t udp_recvfrom(struct sock_t * s, void * buf, size_t len, int fla
     return NET_ERR_OK;
 }
 
+static net_err_t udp_connect(struct sock_t * s, const struct x_sockaddr * addr, x_socklen_t len)
+{
+    net_err_t err = sock_connect(s, addr, len);
+    display_udp_list();
+    return err;
+}
+
 sock_t * udp_create(int family, int protocol)
 {
     static const sock_ops_t udp_ops = {
             .setopt = sock_setopt,
             .sendto = udp_sendto,
             .recvfrom = udp_recvfrom,
-            .close = udp_close
+            .close = udp_close,
+            .connect = udp_connect,
     };
     udp_t * udp = mblock_alloc(&udp_mblock, -1);
     if (!udp)

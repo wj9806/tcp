@@ -93,4 +93,9 @@ int x_setsockopt(int s, int level, int optname, const char * optval, int len);
  */
 int x_close(int s);
 
+/**
+ * connect socket
+ */
+int x_connect(int s, const struct x_sockaddr * addr, x_socklen_t len);
+
 #endif //NET_SOCKET_H
