@@ -199,6 +199,48 @@ static net_err_t udp_connect(struct sock_t * s, const struct x_sockaddr * addr, 
     return err;
 }
 
+static net_err_t udp_bind(struct sock_t * s, const struct x_sockaddr * addr, x_socklen_t len)
+{
+    const struct x_sockaddr_in * addr_in = (const struct x_sockaddr_in *) addr;
+    if (s->local_port != 0)
+    {
+        debug_error(DEBUG_UDP, "port already bound");
+        return NET_ERR_BOUND;
+    }
+
+    int port = x_ntohs(addr_in->sin_port);
+    ipaddr_t local_ip;
+    ipaddr_from_buf(&local_ip, addr_in->sin_addr.addr_array);
+
+    node_t * node;
+    udp_t * udp = (udp_t*)0;
+    list_for_each(node, &udp_list)
+    {
+        udp_t * u = (udp_t *) list_node_parent(node, sock_t , node);
+        if ((sock_t*)u == s)
+        {
+            continue;
+        }
+
+        if (((int)s->local_port == port) && (ipaddr_is_equal(&s->local_ip, &local_ip)))
+        {
+            udp = u;
+            break;
+        }
+    }
+
+    if (udp)
+    {
+        debug_error(DEBUG_UDP, "port already bound");
+        return NET_ERR_BOUND;
+    } else
+    {
+        sock_bind(s, addr, len);
+    }
+    display_udp_list();
+    return NET_ERR_OK;
+}
+
 sock_t * udp_create(int family, int protocol)
 {
     static const sock_ops_t udp_ops = {
@@ -209,6 +251,7 @@ sock_t * udp_create(int family, int protocol)
             .recv = sock_recv,
             .close = udp_close,
             .connect = udp_connect,
+            .bind = udp_bind,
     };
     udp_t * udp = mblock_alloc(&udp_mblock, -1);
     if (!udp)

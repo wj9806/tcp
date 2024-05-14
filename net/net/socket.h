@@ -108,4 +108,6 @@ int x_close(int s);
  */
 int x_connect(int s, const struct x_sockaddr * addr, x_socklen_t len);
 
+int x_bind(int s, const struct x_sockaddr * addr, x_socklen_t addr_len);
+
 #endif //NET_SOCKET_H

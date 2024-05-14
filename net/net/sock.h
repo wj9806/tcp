@@ -45,6 +45,8 @@ typedef struct {
     void (*destroy) (struct sock_t * s);
     //connect socket
     net_err_t (*connect)(struct sock_t * s, const struct x_sockaddr * addr, x_socklen_t len);
+    //bind socket
+    net_err_t (*bind)(struct sock_t * s, const struct x_sockaddr * addr, x_socklen_t len);
 } sock_ops_t;
 
 typedef struct sock_t {
@@ -103,6 +105,11 @@ typedef struct {
 } sock_conn_t;
 
 typedef struct {
+    const struct x_sockaddr * addr;
+    x_socklen_t len;
+} sock_bind_t;
+
+typedef struct {
     sock_wait_t * wait;
     int wait_tmo;
     int sockfd;
@@ -111,6 +118,7 @@ typedef struct {
         sock_data_t data;
         sock_opt_t opt;
         sock_conn_t conn;
+        sock_bind_t bind;
     };
 } sock_req_t;
 
@@ -139,5 +147,7 @@ net_err_t sock_connect(sock_t * sock, const struct x_sockaddr * addr, x_socklen_
 net_err_t sock_send(struct sock_t * s, const void * buf, size_t len, int flags, ssize_t * result_len);
 
 net_err_t sock_recv(struct sock_t * s, void * buf, size_t len, int flags, ssize_t * result_len);
+
+net_err_t sock_bind(struct sock_t * s, const struct x_sockaddr * addr, x_socklen_t len);
 
 #endif //NET_SOCK_H

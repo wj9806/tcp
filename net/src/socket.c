@@ -29,6 +29,9 @@ net_err_t sock_close_req_in(struct func_msg_t * msg);
 //connect socket
 net_err_t sock_connect_req_in(struct func_msg_t * msg);
 
+//bind socket
+net_err_t sock_bind_req_in(struct func_msg_t * msg);
+
 int x_socket(int family, int type, int protocol)
 {
     sock_req_t req;
@@ -293,6 +296,36 @@ int x_connect(int s, const struct x_sockaddr * addr, x_socklen_t len)
     if (err < 0)
     {
         debug_info(DEBUG_SOCKET, "connect sock failed");
+        return -1;
+    }
+
+    return 0;
+}
+
+int x_bind(int s, const struct x_sockaddr * addr, x_socklen_t len)
+{
+    if (!addr || (len != sizeof(struct x_sockaddr)) || s < 0)
+    {
+        debug_error(DEBUG_SOCKET, "invalid param");
+        return -1;
+    }
+
+    if (addr->sin_family != AF_INET)
+    {
+        debug_error(DEBUG_SOCKET, "invalid sin_family");
+        return -1;
+    }
+
+    sock_req_t req;
+    req.wait = 0;
+    req.sockfd = s;
+    req.bind.addr = addr;
+    req.bind.len = len;
+
+    net_err_t err = exmsg_func_exec(sock_bind_req_in, &req);
+    if (err < 0)
+    {
+        debug_info(DEBUG_SOCKET, "bind sock failed");
         return -1;
     }
 
