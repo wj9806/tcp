@@ -37,6 +37,8 @@ typedef struct {
     //recv data from socket
     net_err_t (*recvfrom) (struct sock_t * s, void * buf, size_t len, int flags,
             const struct x_sockaddr * src, x_socklen_t * src_len, ssize_t * result_len);
+    //recv data from socket
+    net_err_t (*recv) (struct sock_t * s, void * buf, size_t len, int flags, ssize_t * result_len);
     //set options
     net_err_t (*setopt) (struct sock_t * s, int level, int optname, const char * optval, int optlen);
     //destroy socket
@@ -135,5 +137,7 @@ net_err_t sock_setopt(struct sock_t * s, int level, int optname, const char * op
 net_err_t sock_connect(sock_t * sock, const struct x_sockaddr * addr, x_socklen_t len);
 
 net_err_t sock_send(struct sock_t * s, const void * buf, size_t len, int flags, ssize_t * result_len);
+
+net_err_t sock_recv(struct sock_t * s, void * buf, size_t len, int flags, ssize_t * result_len);
 
 #endif //NET_SOCK_H

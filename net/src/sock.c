@@ -309,6 +309,44 @@ net_err_t sock_recvfrom_req_in(struct func_msg_t * msg)
     return err;
 }
 
+net_err_t sock_recv(struct sock_t * s, void * buf, size_t len, int flags, ssize_t * result_len)
+{
+    struct x_sockaddr addr;
+    x_socklen_t slen;
+    return s->ops->recvfrom(s, buf, len, flags, &addr, &slen, result_len);
+}
+
+net_err_t sock_recv_req_in(struct func_msg_t * msg)
+{
+    sock_req_t * req = (sock_req_t *)msg->param;
+
+    x_socket_t * s = get_socket(req->sockfd);
+    if (!s)
+    {
+        debug_error(DEBUG_SOCKET, "param error");
+        return NET_ERR_PARAM;
+    }
+
+    sock_t * sock = s->sock;
+    sock_data_t * data = &req->data;
+    if (!sock->ops->recvfrom)
+    {
+        debug_error(DEBUG_SOCKET, "recvfrom func no impl");
+        return NET_ERR_NONE;
+    }
+
+    net_err_t err = sock->ops->recv(sock, (void *)data->buf, data->len, data->flags, &data->comp_len);
+    if (err == NET_ERR_NEED_WAIT)
+    {
+        if (sock->rcv_wait)
+        {
+            sock_wait_add(sock->rcv_wait, sock->rcv_tmo, req);
+        }
+    }
+
+    return err;
+}
+
 net_err_t sock_setopt(struct sock_t * s, int level, int optname, const char * optval, int optlen)
 {
     if (level != SOL_SOCKET)

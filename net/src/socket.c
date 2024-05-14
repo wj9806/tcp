@@ -17,6 +17,9 @@ net_err_t sock_send_req_in(struct func_msg_t * msg);
 //recv data
 net_err_t sock_recvfrom_req_in(struct func_msg_t * msg);
 
+//recv data
+net_err_t sock_recv_req_in(struct func_msg_t * msg);
+
 //set sockopt
 net_err_t sock_setsockopt_req_in(struct func_msg_t * msg);
 
@@ -161,6 +164,45 @@ ssize_t x_recvfrom(int s, const void * buf, size_t len, int flags, const struct 
         req.data.addr_len = src_len;
         req.data.comp_len = 0;
         net_err_t err = exmsg_func_exec(sock_recvfrom_req_in, &req);
+        if (err < 0)
+        {
+            debug_info(DEBUG_SOCKET, "recv socket failed");
+            return -1;
+        }
+
+        if (req.data.comp_len)
+        {
+            return (ssize_t)req.data.comp_len;
+        }
+
+        err = sock_wait_enter(req.wait, req.wait_tmo);
+        if (err < 0)
+        {
+            debug_error(DEBUG_SOCKET, "recv failed");
+            return err;
+        }
+    }
+}
+
+ssize_t x_recv(int s, const void * buf, size_t len, int flags)
+{
+    if (!buf || !len)
+    {
+        debug_error(DEBUG_SOCKET, "invalid param");
+        return NET_ERR_PARAM;
+    }
+
+    while (1)
+    {
+        sock_req_t req;
+        req.wait = (sock_wait_t *)0;
+        req.wait_tmo = 0;
+        req.sockfd = s;
+        req.data.buf = buf;
+        req.data.len = len;
+        req.data.flags = flags;
+        req.data.comp_len = 0;
+        net_err_t err = exmsg_func_exec(sock_recv_req_in, &req);
         if (err < 0)
         {
             debug_info(DEBUG_SOCKET, "recv socket failed");

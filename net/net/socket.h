@@ -89,6 +89,11 @@ ssize_t x_send(int s, const void * buf, size_t len, int flags);
 ssize_t x_recvfrom(int s, const void * buf, size_t len, int flags, const struct x_sockaddr * src, x_socklen_t * src_len);
 
 /**
+ * recv buf from socket
+ */
+ssize_t x_recv(int s, const void * buf, size_t len, int flags);
+
+/**
  * set socket opt
  */
 int x_setsockopt(int s, int level, int optname, const char * optval, int len);
