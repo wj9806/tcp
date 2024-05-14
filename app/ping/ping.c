@@ -35,17 +35,14 @@ static uint16_t checksum_16(void * buf, uint16_t len)
 void ping_run(ping_t * ping, const char * dest, int count, int size, int interval)
 {
     static uint16_t start_id = PING_DEFAULT_ID;
-    WSADATA wsadata;
-    WSAStartup(MAKEWORD(2, 2), &wsadata);
 
-    SOCKET s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+    int s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     if (s < 0)
     {
         plat_printf("ping: open socket failed\n");
         goto end;
     }
 
-    //int tmo = 5000;
     struct timeval tmo;
     tmo.tv_sec = 3;
     tmo.tv_usec = 0;
@@ -56,6 +53,8 @@ void ping_run(ping_t * ping, const char * dest, int count, int size, int interva
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = inet_addr(dest);
     addr.sin_port = 0;
+
+    connect(s, (const struct sockaddr *)&addr, sizeof(addr));
 
     int fill_size = size > PING_BUFFER_SIZE ? PING_BUFFER_SIZE : size;
     for (int i = 0; i < fill_size; ++i) {
@@ -70,7 +69,7 @@ void ping_run(ping_t * ping, const char * dest, int count, int size, int interva
         ping->req.echo_hdr.id = start_id;
         ping->req.echo_hdr.seq = seq;
         ping->req.echo_hdr.checksum = checksum_16(&ping->req, total_size);
-        int size = sendto(s, (const char *)&ping->req, total_size, 0, (const struct sockaddr *)&addr, sizeof(addr));
+        int size = send(s, (const char *)&ping->req, total_size, 0);
         if (size < 0)
         {
             printf("send ping request failed\n");
@@ -83,7 +82,7 @@ void ping_run(ping_t * ping, const char * dest, int count, int size, int interva
         do {
             struct sockaddr from_addr;
             socklen_t addr_len = sizeof(from_addr);
-            size = recvfrom(s, (char *)&ping->reply, sizeof(ping->reply), 0, &from_addr, &addr_len);
+            size = recv(s, (char *)&ping->reply, sizeof(ping->reply), 0);
             if (size < 0)
             {
                 printf("recv ping timeout\n");
