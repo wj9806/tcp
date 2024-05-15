@@ -11,6 +11,7 @@
 #include "timer.h"
 #include "raw.h"
 #include "udp.h"
+#include "tcp_in.h"
 
 static uint16_t packet_id = 0;
 static ip_frag_t frag_array[IP_FRAGS_MAX_NR];
@@ -446,8 +447,16 @@ static net_err_t ip_normal_in(netif_t * netif, pktbuf_t * buf, ipaddr_t * src_ip
             }
             return NET_ERR_OK;
         }
-        case NET_PROTOCOL_TCP:
-            break;
+        case NET_PROTOCOL_TCP: {
+            pktbuf_remove_header(buf, ipv4_hdr_size(pkt));
+            net_err_t err = tcp_in(buf, src_ip, dest_ip);
+            if (err < 0)
+            {
+                debug_warn(DEBUG_IP, "tcp in error: %d", err);
+                return err;
+            }
+            return NET_ERR_OK;
+        }
         default:
             debug_warn(DEBUG_IP, "unknown protocol");
             net_err_t err = raw_in(buf);
