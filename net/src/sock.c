@@ -8,8 +8,9 @@
 #include "socket.h"
 #include "udp.h"
 #include "tools.h"
+#include "tcp.h"
 
-#define SOCKET_MAX_NR   (RAW_MAX_NR)
+#define SOCKET_MAX_NR   (RAW_MAX_NR + UDP_MAX_NR + TCP_MAX_NR)
 
 static x_socket_t socket_tbl[SOCKET_MAX_NR];
 
@@ -170,6 +171,7 @@ net_err_t sock_create_req_in(struct func_msg_t * msg)
     } sock_tbl[] = {
             [SOCK_RAW] = {.protocol = IPPROTO_ICMP, .create = raw_create,},
             [SOCK_DGRAM] = {.protocol = IPPROTO_UDP, .create = udp_create,},
+            [SOCK_STREAM] = {.protocol = IPPROTO_TCP, .create = tcp_create,},
     };
 
     sock_req_t * req = (sock_req_t *)msg->param;

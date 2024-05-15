@@ -1,5 +1,6 @@
 #include "tcp_echo_client.h"
 #include "sys_plat.h"
+#include "net_api.h"
 
 /**
  * TCP client
@@ -11,11 +12,7 @@ int tcp_echo_client_start (const char * ip, int port)
 {
     plat_printf("tcp echo client, ip: %s, port: %d\n", ip, port);
 
-    //The Windows environment starts the network library
-    WSADATA wsadata;
-    WSAStartup(MAKEWORD(2, 2), &wsadata);
-
-    SOCKET s = socket(AF_INET, SOCK_STREAM, 0);
+    int s = socket(AF_INET, SOCK_STREAM, 0);
     if (s < 0)
     {
         plat_printf("tcp echo client: open socket failed\n");
@@ -32,6 +29,13 @@ int tcp_echo_client_start (const char * ip, int port)
         plat_printf("connect error\n");
         goto end;
     }
+
+#if 1
+    char sbuf[128];
+    fgets(sbuf, sizeof(sbuf), stdin);
+    close(s);
+    return 0;
+#endif
 
     char buf[128];
     plat_printf(">>");
@@ -53,12 +57,12 @@ int tcp_echo_client_start (const char * ip, int port)
         plat_printf(">>");
     }
 
-    closesocket(s);
+    close(s);
     return 1;
 end:
     if (s >= 0)
     {
-        closesocket(s);
+        close(s);
     }
     return -1;
 }

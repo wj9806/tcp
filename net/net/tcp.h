@@ -14,4 +14,9 @@ typedef struct {
 
 net_err_t tcp_init();
 
+/**
+ * create tcp
+ */
+sock_t * tcp_create(int family, int protocol);
+
 #endif //NET_TCP_H
