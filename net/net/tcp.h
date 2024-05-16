@@ -8,6 +8,7 @@
 #include "net_err.h"
 #include "sock.h"
 #include "net_cfg.h"
+#include "pktbuf.h"
 
 #pragma pack(1)
 typedef struct {
@@ -61,6 +62,16 @@ typedef struct {
 #pragma pack()
 
 typedef struct {
+    ipaddr_t local_ip;
+    ipaddr_t remote_ip;
+    tcp_hdr_t * hdr;
+    pktbuf_t * buf;
+    uint32_t data_len;
+    uint32_t seq;
+    uint32_t seq_len;
+} tcp_seg_t;
+
+typedef struct {
     sock_t base;
 } tcp_t;
 
@@ -77,6 +88,14 @@ sock_t * tcp_create(int family, int protocol);
 static inline int tcp_hdr_size(tcp_hdr_t * hdr)
 {
     return hdr->shdr * 4;
+}
+
+/**
+ * set tcp header size
+ */
+static inline void tcp_set_hdr_size(tcp_hdr_t * hdr, int size)
+{
+    hdr->shdr = size / 4;
 }
 
 #endif //NET_TCP_H
