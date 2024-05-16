@@ -9,6 +9,7 @@
 
 static net_err_t send_out(tcp_hdr_t * out, pktbuf_t * buf, ipaddr_t * dest, ipaddr_t * src)
 {
+
     out->sport = x_htons(out->sport);
     out->dport = x_htons(out->dport);
     out->seq = x_htonl(out->seq);
@@ -17,7 +18,7 @@ static net_err_t send_out(tcp_hdr_t * out, pktbuf_t * buf, ipaddr_t * dest, ipad
     out->urg_ptr = x_htons(out->urg_ptr);
     out->checksum = 0;
     out->checksum = checksum_peso(buf, dest, src, NET_PROTOCOL_TCP);
-
+    tcp_show_pkt("tcp out", out, buf);
     net_err_t err = ipv4_out(NET_PROTOCOL_TCP, dest, src, buf);
     if (err < 0)
     {

@@ -75,6 +75,16 @@ typedef struct {
     sock_t base;
 } tcp_t;
 
+#if DEBUG_DISP_ENABLED(DEBUG_TCP)
+void tcp_show_info(char * msg, tcp_t * tcp);
+void tcp_show_pkt(char * msg, tcp_hdr_t * tcp_hdr, pktbuf_t * buf);
+void tcp_show_list(void);
+#else
+#define tcp_show_info(msg, tcp)
+#define tcp_show_pkt(msg, tcp_hdr, buf)
+#define tcp_show_list()
+#endif
+
 net_err_t tcp_init();
 
 /**
