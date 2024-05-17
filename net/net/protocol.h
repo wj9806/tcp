@@ -5,6 +5,7 @@
 #ifndef NET_PROTOCOL_H
 #define NET_PROTOCOL_H
 
+#define NET_PORT_EMPTY      0
 #define NET_PORT_DYN_START  1024
 #define NET_PORT_DYN_END    65535
 

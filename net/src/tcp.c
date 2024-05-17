@@ -5,6 +5,9 @@
 #include "tcp.h"
 #include "debug.h"
 #include "mblock.h"
+#include "socket.h"
+#include "tools.h"
+#include "protocol.h"
 
 static tcp_t tcp_tbl[TCP_MAX_NR];
 static mblock_t tcp_mblock;
@@ -79,9 +82,79 @@ static tcp_t * tcp_get_free(int wait)
     return tcp;
 }
 
+/** alloc port for tcp connection **/
+static int tcp_alloc_port()
+{
+    static int search_index = NET_PORT_DYN_START;
+    for (int i = NET_PORT_DYN_START; i < NET_PORT_DYN_END; ++i) {
+        node_t * node;
+        list_for_each(node, &tcp_list)
+        {
+            sock_t * sock = list_node_parent(node, sock_t, node);
+            if (sock->local_port == search_index)
+            {
+                break;
+            }
+        }
+        if (++search_index >= NET_PORT_DYN_END)
+        {
+            search_index = NET_PORT_DYN_START;
+        }
+        if (!node)
+        {
+            return search_index;
+        }
+    }
+
+    return NET_PORT_EMPTY;
+}
+
+static net_err_t tcp_connect(struct sock_t * s, const struct x_sockaddr * addr, x_socklen_t len)
+{
+    const struct x_sockaddr_in * addr_in = (const struct x_sockaddr_in *)addr;
+
+    ipaddr_from_buf(&s->remote_ip, (const uint8_t *)&addr_in->sin_addr.addr_array);
+    s->remote_port = x_ntohs(addr_in->sin_port);
+
+    if (s->local_port == NET_PORT_EMPTY)
+    {
+        int port = tcp_alloc_port();
+        if (port == NET_PORT_EMPTY)
+        {
+            debug_error(DEBUG_TCP, "alloc tcp port failed");
+            return NET_ERR_NONE;
+        }
+
+        s->local_port = port;
+    }
+
+    if (ipaddr_is_any(&s->local_ip))
+    {
+        /** find route table by remote ip **/
+        rentry_t * rt = rt_find(&s->remote_ip);
+        if (rt == (rentry_t *)0)
+        {
+            debug_error(DEBUG_TCP, "cannot find rentry");
+            return NET_ERR_UNREACHABLE;
+        }
+
+        ipaddr_copy(&s->local_ip, &rt->netif->ipaddr);
+    }
+    return NET_ERR_OK;
+}
+
+static net_err_t tcp_close (struct sock_t * s)
+{
+    return NET_ERR_OK;
+}
+
 static tcp_t * tcp_alloc(int wait, int family, int protocol)
 {
-    static const sock_ops_t tcp_ops;
+    //tcp function table
+    static const sock_ops_t tcp_ops = {
+            .connect = tcp_connect,
+            .close = tcp_close,
+    };
 
     tcp_t * tcp = tcp_get_free(wait);
     if (!tcp)
