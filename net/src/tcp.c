@@ -140,7 +140,7 @@ static net_err_t tcp_connect(struct sock_t * s, const struct x_sockaddr * addr, 
 
         ipaddr_copy(&s->local_ip, &rt->netif->ipaddr);
     }
-    return NET_ERR_OK;
+    return NET_ERR_NEED_WAIT;
 }
 
 static net_err_t tcp_close (struct sock_t * s)
