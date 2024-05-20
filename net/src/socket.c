@@ -299,6 +299,15 @@ int x_connect(int s, const struct x_sockaddr * addr, x_socklen_t len)
         return -1;
     }
 
+    if (req.wait)
+    {
+        err = sock_wait_enter(req.wait, req.wait_tmo);
+        if (err < 0)
+        {
+            debug_error(DEBUG_SOCKET, "send failed");
+            return err;
+        }
+    }
     return 0;
 }
 

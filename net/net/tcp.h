@@ -73,6 +73,9 @@ typedef struct {
 
 typedef struct {
     sock_t base;
+    struct {
+        sock_wait_t wait;
+    } conn;
 } tcp_t;
 
 #if DEBUG_DISP_ENABLED(DEBUG_TCP)

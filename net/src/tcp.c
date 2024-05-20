@@ -173,7 +173,20 @@ static tcp_t * tcp_alloc(int wait, int family, int protocol)
         return (tcp_t *)0;
     }
 
+    if(sock_wait_init(&tcp->conn.wait))
+    {
+        debug_error(DEBUG_TCP, "create conn.wait failed.");
+        goto alloc_failed;
+    }
+    tcp->base.conn_wait = &tcp->conn.wait;
     return tcp;
+    alloc_failed:
+    if(tcp->base.conn_wait)
+    {
+        sock_wait_destroy(tcp->base.conn_wait);
+    }
+    mblock_free(&tcp_mblock, tcp);
+    return (tcp_t *)0;
 }
 
 static void tcp_insert(tcp_t * tcp)
