@@ -109,8 +109,25 @@ static int tcp_alloc_port()
     return NET_PORT_EMPTY;
 }
 
+static uint32_t tcp_get_iss()
+{
+    static uint32_t seq = 0;
+    return ++seq;
+}
+
+static net_err_t tcp_init_connect(tcp_t * tcp)
+{
+    tcp->snd.iss = tcp_get_iss();
+    tcp->snd.una = tcp->snd.nxt = tcp->snd.iss;
+
+    tcp->rcv.nxt = 0;
+
+    return NET_ERR_OK;
+}
+
 static net_err_t tcp_connect(struct sock_t * s, const struct x_sockaddr * addr, x_socklen_t len)
 {
+    tcp_t * tcp = (tcp_t*)s;
     const struct x_sockaddr_in * addr_in = (const struct x_sockaddr_in *)addr;
 
     ipaddr_from_buf(&s->remote_ip, (const uint8_t *)&addr_in->sin_addr.addr_array);
@@ -139,6 +156,13 @@ static net_err_t tcp_connect(struct sock_t * s, const struct x_sockaddr * addr, 
         }
 
         ipaddr_copy(&s->local_ip, &rt->netif->ipaddr);
+    }
+
+    net_err_t err = tcp_init_connect(tcp);
+    if (err < 0)
+    {
+        debug_error(DEBUG_TCP, "init tcp conn failed");
+        return err;
     }
     return NET_ERR_NEED_WAIT;
 }
@@ -179,11 +203,35 @@ static tcp_t * tcp_alloc(int wait, int family, int protocol)
         goto alloc_failed;
     }
     tcp->base.conn_wait = &tcp->conn.wait;
+
+    if(sock_wait_init(&tcp->snd.wait))
+    {
+        debug_error(DEBUG_TCP, "create snd.wait failed.");
+        goto alloc_failed;
+    }
+    tcp->base.snd_wait = &tcp->snd.wait;
+
+    if(sock_wait_init(&tcp->rcv.wait))
+    {
+        debug_error(DEBUG_TCP, "create rcv.wait failed.");
+        goto alloc_failed;
+    }
+    tcp->base.rcv_wait = &tcp->rcv.wait;
+
     return tcp;
-    alloc_failed:
+
+alloc_failed:
     if(tcp->base.conn_wait)
     {
         sock_wait_destroy(tcp->base.conn_wait);
+    }
+    if(tcp->base.snd_wait)
+    {
+        sock_wait_destroy(tcp->base.snd_wait);
+    }
+    if(tcp->base.rcv_wait)
+    {
+        sock_wait_destroy(tcp->base.rcv_wait);
     }
     mblock_free(&tcp_mblock, tcp);
     return (tcp_t *)0;

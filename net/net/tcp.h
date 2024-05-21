@@ -76,6 +76,22 @@ typedef struct {
     struct {
         sock_wait_t wait;
     } conn;
+
+    struct {
+        //un ack
+        uint32_t una;
+        //next
+        uint32_t nxt;
+        //initial sequence
+        uint32_t iss;
+        sock_wait_t wait;
+    } snd;
+
+    struct {
+        uint32_t nxt;
+        uint32_t iss;
+        sock_wait_t wait;
+    }rcv;
 } tcp_t;
 
 #if DEBUG_DISP_ENABLED(DEBUG_TCP)
