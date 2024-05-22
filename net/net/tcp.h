@@ -73,6 +73,11 @@ typedef struct {
 
 typedef struct {
     sock_t base;
+
+    struct {
+        uint32_t syn_out: 1;
+    } flags;
+
     struct {
         sock_wait_t wait;
     } conn;

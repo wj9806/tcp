@@ -8,6 +8,7 @@
 #include "socket.h"
 #include "tools.h"
 #include "protocol.h"
+#include "tcp_out.h"
 
 static tcp_t tcp_tbl[TCP_MAX_NR];
 static mblock_t tcp_mblock;
@@ -85,7 +86,13 @@ static tcp_t * tcp_get_free(int wait)
 /** alloc port for tcp connection **/
 static int tcp_alloc_port()
 {
+#if 1
+    srand((unsigned int)time(NULL));
+    int num = rand() % 1000;
+    int search_index = num + NET_PORT_DYN_START;
+#else
     static int search_index = NET_PORT_DYN_START;
+#endif
     for (int i = NET_PORT_DYN_START; i < NET_PORT_DYN_END; ++i) {
         node_t * node;
         list_for_each(node, &tcp_list)
@@ -162,6 +169,12 @@ static net_err_t tcp_connect(struct sock_t * s, const struct x_sockaddr * addr, 
     if (err < 0)
     {
         debug_error(DEBUG_TCP, "init tcp conn failed");
+        return err;
+    }
+
+    if ((err = tcp_send_syn(tcp)) < 0)
+    {
+        debug_error(DEBUG_TCP, "send syn failed");
         return err;
     }
     return NET_ERR_NEED_WAIT;
