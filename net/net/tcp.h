@@ -91,6 +91,7 @@ typedef struct {
 
     struct {
         uint32_t syn_out: 1;
+        uint32_t irs_valid : 1;
     } flags;
 
     tcp_state_t state;
@@ -153,5 +154,10 @@ static inline void tcp_set_hdr_size(tcp_hdr_t * hdr, int size)
 {
     hdr->shdr = size / 4;
 }
+
+/**
+ * abort tcp connection
+ */
+net_err_t tcp_abort(tcp_t * tcp, net_err_t err);
 
 #endif //NET_TCP_H
