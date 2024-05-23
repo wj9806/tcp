@@ -9,6 +9,7 @@
 #include "tools.h"
 #include "protocol.h"
 #include "tcp_out.h"
+#include "tcp_state.h"
 
 static tcp_t tcp_tbl[TCP_MAX_NR];
 static mblock_t tcp_mblock;
@@ -137,6 +138,11 @@ static net_err_t tcp_connect(struct sock_t * s, const struct x_sockaddr * addr, 
     tcp_t * tcp = (tcp_t*)s;
     const struct x_sockaddr_in * addr_in = (const struct x_sockaddr_in *)addr;
 
+    if (tcp->state != TCP_STATE_CLOSED)
+    {
+        debug_error(DEBUG_TCP, "tcp is not closed");
+        return NET_ERR_STATE;
+    }
     ipaddr_from_buf(&s->remote_ip, (const uint8_t *)&addr_in->sin_addr.addr_array);
     s->remote_port = x_ntohs(addr_in->sin_port);
 
@@ -177,6 +183,7 @@ static net_err_t tcp_connect(struct sock_t * s, const struct x_sockaddr * addr, 
         debug_error(DEBUG_TCP, "send syn failed");
         return err;
     }
+    tcp_set_state(tcp, TCP_STATE_SYN_SENT);
     return NET_ERR_NEED_WAIT;
 }
 
@@ -209,7 +216,7 @@ static tcp_t * tcp_alloc(int wait, int family, int protocol)
         mblock_free(&tcp_mblock, tcp);
         return (tcp_t *)0;
     }
-
+    tcp->state = TCP_STATE_CLOSED;
     if(sock_wait_init(&tcp->conn.wait))
     {
         debug_error(DEBUG_TCP, "create conn.wait failed.");
