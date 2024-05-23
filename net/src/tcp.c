@@ -275,3 +275,28 @@ sock_t * tcp_create(int family, int protocol)
     tcp_insert(tcp);
     return (sock_t *)tcp;
 }
+
+tcp_t * tcp_find(ipaddr_t * local_ip, uint16_t local_port, ipaddr_t * remote_ip, uint16_t remote_port)
+{
+    tcp_t * tcp = (tcp_t *)0;
+    node_t * node;
+    list_for_each(node, &tcp_list)
+    {
+        sock_t * s = (sock_t *) list_node_parent(node, sock_t, node);
+        if ((s->local_port == local_port )
+            && ipaddr_is_equal(&s->remote_ip, remote_ip)
+            && (s->remote_port == remote_port))
+        {
+            if (ipaddr_is_any(&s->local_ip))
+            {
+                return (tcp_t*)s;
+            } else if (ipaddr_is_equal(&s->local_ip, local_ip))
+            {
+                return (tcp_t*)s;
+            } else{
+                continue;
+            }
+        }
+    }
+    return tcp;
+}
