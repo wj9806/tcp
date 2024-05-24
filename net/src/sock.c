@@ -439,9 +439,9 @@ net_err_t sock_connect_req_in(struct func_msg_t * msg)
     net_err_t err = sock->ops->connect(sock, conn->addr, conn->len);
     if (err == NET_ERR_NEED_WAIT)
     {
-        if (sock->rcv_wait)
+        if (sock->conn_wait)
         {
-            sock_wait_add(sock->rcv_wait, sock->rcv_tmo, req);
+            sock_wait_add(sock->conn_wait, sock->rcv_tmo, req);
         }
     }
     return err;

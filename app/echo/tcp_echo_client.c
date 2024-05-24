@@ -29,6 +29,10 @@ int tcp_echo_client_start (const char * ip, int port)
         plat_printf("connect error\n");
         goto end;
     }
+    else
+    {
+        plat_printf("connect success\n");
+    }
 
 #if 1
     char sbuf[128];
