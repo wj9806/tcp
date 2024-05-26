@@ -24,6 +24,7 @@ typedef enum net_err_t
     NET_ERR_UNREACHABLE = -14,
     NET_ERR_BOUND = -14,
     NET_ERR_RESET = -15,
+    NET_ERR_CLOSE = -16
 } net_err_t;
 
 #endif //NET_NET_ERR_H

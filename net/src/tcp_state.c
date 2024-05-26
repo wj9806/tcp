@@ -4,6 +4,7 @@
 
 #include "tcp_state.h"
 #include "tcp_out.h"
+#include "tcp_in.h"
 
 const char * tcp_state_name(tcp_state_t state)
 {
@@ -98,6 +99,29 @@ net_err_t tcp_syn_recv_in(tcp_t * tcp, tcp_seg_t * seg)
 
 net_err_t tcp_established_in(tcp_t * tcp, tcp_seg_t * seg)
 {
+    tcp_hdr_t * tcp_hdr = seg->hdr;
+
+    if (tcp_hdr->f_rst)
+    {
+        debug_warn(DEBUG_TCP, "recv a rst");
+        return tcp_abort(tcp, NET_ERR_RESET);
+    }
+    if (tcp_hdr->f_syn)
+    {
+        debug_warn(DEBUG_TCP, "recv a sync");
+        tcp_send_reset(seg);
+        return tcp_abort(tcp, NET_ERR_RESET);
+    }
+    if(tcp_ack_process(tcp, seg) < 0)
+    {
+        debug_warn(DEBUG_TCP, "ack process failed");
+        return NET_ERR_UNREACHABLE;
+    }
+    tcp_data_in(tcp, seg);
+    if (tcp_hdr->f_fin)
+    {
+        tcp_set_state(tcp, TCP_STATE_CLOSE_WAIT);
+    }
     return NET_ERR_OK;
 }
 
