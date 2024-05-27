@@ -125,13 +125,72 @@ net_err_t tcp_established_in(tcp_t * tcp, tcp_seg_t * seg)
     return NET_ERR_OK;
 }
 
+static void tcp_time_wait(tcp_t * tcp)
+{
+    tcp_set_state(tcp, TCP_STATE_TIME_WAIT);
+}
+
 net_err_t tcp_fin_wait_1_in(tcp_t * tcp, tcp_seg_t * seg)
 {
+    tcp_hdr_t * tcp_hdr = seg->hdr;
+
+    if (tcp_hdr->f_rst)
+    {
+        debug_warn(DEBUG_TCP, "recv a rst");
+        return tcp_abort(tcp, NET_ERR_RESET);
+    }
+    if (tcp_hdr->f_syn)
+    {
+        debug_warn(DEBUG_TCP, "recv a sync");
+        tcp_send_reset(seg);
+        return tcp_abort(tcp, NET_ERR_RESET);
+    }
+
+    if (tcp_ack_process(tcp, seg) < 0)
+    {
+        debug_warn(DEBUG_TCP, "tcp ack process failed");
+        return NET_ERR_UNREACHABLE;
+    }
+    tcp_data_in(tcp, seg);
+
+    if (tcp_hdr->f_fin)
+    {
+        tcp_time_wait(tcp);
+    }
+    else
+    {
+        tcp_set_state(tcp, TCP_STATE_FIN_WAIT_2);
+    }
     return NET_ERR_OK;
 }
 
 net_err_t tcp_fin_wait_2_in(tcp_t * tcp, tcp_seg_t * seg)
 {
+    tcp_hdr_t * tcp_hdr = seg->hdr;
+
+    if (tcp_hdr->f_rst)
+    {
+        debug_warn(DEBUG_TCP, "recv a rst");
+        return tcp_abort(tcp, NET_ERR_RESET);
+    }
+    if (tcp_hdr->f_syn)
+    {
+        debug_warn(DEBUG_TCP, "recv a sync");
+        tcp_send_reset(seg);
+        return tcp_abort(tcp, NET_ERR_RESET);
+    }
+
+    if (tcp_ack_process(tcp, seg) < 0)
+    {
+        debug_warn(DEBUG_TCP, "tcp ack process failed");
+        return NET_ERR_UNREACHABLE;
+    }
+    tcp_data_in(tcp, seg);
+
+    if (tcp_hdr->f_fin)
+    {
+        tcp_time_wait(tcp);
+    }
     return NET_ERR_OK;
 }
 
@@ -142,6 +201,33 @@ net_err_t tcp_closing_in(tcp_t * tcp, tcp_seg_t * seg)
 
 net_err_t tcp_time_wait_in(tcp_t * tcp, tcp_seg_t * seg)
 {
+    tcp_hdr_t * tcp_hdr = seg->hdr;
+
+    if (tcp_hdr->f_rst)
+    {
+        debug_warn(DEBUG_TCP, "recv a rst");
+        return tcp_abort(tcp, NET_ERR_RESET);
+    }
+    if (tcp_hdr->f_syn)
+    {
+        debug_warn(DEBUG_TCP, "recv a sync");
+        tcp_send_reset(seg);
+        return tcp_abort(tcp, NET_ERR_RESET);
+    }
+
+    if (tcp_ack_process(tcp, seg) < 0)
+    {
+        debug_warn(DEBUG_TCP, "tcp ack process failed");
+        return NET_ERR_UNREACHABLE;
+    }
+
+    if (tcp_hdr->f_fin)
+    {
+        //send ack
+        tcp_send_ack(tcp, seg);
+
+        tcp_time_wait(tcp);
+    }
     return NET_ERR_OK;
 }
 
@@ -152,7 +238,26 @@ net_err_t tcp_close_wait_in(tcp_t * tcp, tcp_seg_t * seg)
 
 net_err_t tcp_last_ack_in(tcp_t * tcp, tcp_seg_t * seg)
 {
-    return NET_ERR_OK;
+    tcp_hdr_t * tcp_hdr = seg->hdr;
+
+    if (tcp_hdr->f_rst)
+    {
+        debug_warn(DEBUG_TCP, "recv a rst");
+        return tcp_abort(tcp, NET_ERR_RESET);
+    }
+    if (tcp_hdr->f_syn)
+    {
+        debug_warn(DEBUG_TCP, "recv a sync");
+        tcp_send_reset(seg);
+        return tcp_abort(tcp, NET_ERR_RESET);
+    }
+
+    if (tcp_ack_process(tcp, seg) < 0)
+    {
+        debug_warn(DEBUG_TCP, "tcp ack process failed");
+        return NET_ERR_UNREACHABLE;
+    }
+    return tcp_abort(tcp, NET_ERR_CLOSE);
 }
 
 

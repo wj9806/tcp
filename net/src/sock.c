@@ -419,6 +419,13 @@ net_err_t sock_close_req_in(struct func_msg_t * msg)
         return NET_ERR_NONE;
     }
     net_err_t err = sock->ops->close(sock);
+    if (err == NET_ERR_NEED_WAIT)
+    {
+        if (sock->conn_wait)
+        {
+            sock_wait_add(sock->conn_wait, sock->rcv_tmo, req);
+        }
+    }
     socket_free(s);
     return err;
 }

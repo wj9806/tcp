@@ -268,7 +268,7 @@ int x_close(int s)
     {
         sock_wait_enter(req.wait, req.wait_tmo);
     }
-
+    //TODO: close resource
     return 0;
 }
 
