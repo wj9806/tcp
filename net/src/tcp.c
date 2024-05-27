@@ -187,8 +187,38 @@ static net_err_t tcp_connect(struct sock_t * s, const struct x_sockaddr * addr, 
     return NET_ERR_NEED_WAIT;
 }
 
+static void tcp_free(tcp_t * tcp)
+{
+    sock_wait_destroy(&tcp->conn.wait);
+    sock_wait_destroy(&tcp->rcv.wait);
+    sock_wait_destroy(&tcp->snd.wait);
+    tcp->state = TCP_STATE_FREE;
+    list_remove(&tcp_list, &tcp->base.node);
+    mblock_free(&tcp_mblock, tcp);
+}
+
 static net_err_t tcp_close (struct sock_t * s)
 {
+    tcp_t * tcp = (tcp_t*)s;
+    debug_info(DEBUG_TCP, "closing tcp: state = %s", tcp_state_name(tcp->state));
+    switch (tcp->state) {
+        case TCP_STATE_CLOSED:
+            debug_info(DEBUG_TCP, "tcp already closed");
+            tcp_free(tcp);
+            return NET_ERR_OK;
+        case TCP_STATE_SYN_SENT:
+        case TCP_STATE_SYN_RECV:
+            tcp_abort(tcp, NET_ERR_CLOSE);
+            tcp_free(tcp);
+            return NET_ERR_OK;
+        case TCP_STATE_CLOSE_WAIT:
+            tcp_send_fin(tcp);
+            tcp_set_state(tcp, TCP_STATE_LAST_ACK);
+            return NET_ERR_NEED_WAIT;
+        default:
+            debug_error(DEBUG_TCP, "tcp state error");
+            return NET_ERR_STATE;
+    }
     return NET_ERR_OK;
 }
 

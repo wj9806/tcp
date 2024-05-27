@@ -70,7 +70,7 @@ net_err_t tcp_syn_sent_in(tcp_t * tcp, tcp_seg_t * seg)
         tcp->rcv.iss = tcp_hdr->seq;
         tcp->rcv.nxt = tcp_hdr->seq + 1;
         tcp->flags.irs_valid = 1;
-        if (tcp_hdr->ack)
+        if (tcp_hdr->f_ack)
         {
             tcp_ack_process(tcp, seg);
         }

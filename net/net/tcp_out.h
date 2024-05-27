@@ -19,4 +19,7 @@ net_err_t tcp_ack_process(tcp_t * tcp, tcp_seg_t * seg);
 /** send ack */
 net_err_t tcp_send_ack(tcp_t * tcp, tcp_seg_t * seg);
 
+/** send fin*/
+net_err_t tcp_send_fin(tcp_t * tcp);
+
 #endif //NET_TCP_OUT_H

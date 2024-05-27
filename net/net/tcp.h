@@ -72,7 +72,8 @@ typedef struct {
 } tcp_seg_t;
 
 typedef enum {
-    TCP_STATE_CLOSED = 0,
+    TCP_STATE_FREE = 0,
+    TCP_STATE_CLOSED,
     TCP_STATE_LISTEN,
     TCP_STATE_SYN_SENT,
     TCP_STATE_SYN_RECV,
@@ -91,6 +92,7 @@ typedef struct {
 
     struct {
         uint32_t syn_out: 1;
+        uint32_t fin_out : 1;
         uint32_t irs_valid : 1;
     } flags;
 
