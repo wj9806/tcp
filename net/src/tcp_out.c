@@ -100,13 +100,17 @@ net_err_t tcp_send_syn(tcp_t * tcp)
 
 net_err_t tcp_ack_process(tcp_t * tcp, tcp_seg_t * seg)
 {
-    //tcp_hdr_t * tcp_hdr = seg->hdr;
+    tcp_hdr_t * tcp_hdr = seg->hdr;
     if (tcp->flags.syn_out)
     {
         tcp->snd.una++;
         tcp->flags.syn_out = 0;
     }
 
+    if (tcp->flags.fin_out && (tcp_hdr->ack - tcp->snd.una > 0))
+    {
+        tcp->flags.fin_out = 0;
+    }
     return NET_ERR_OK;
 }
 
