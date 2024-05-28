@@ -37,6 +37,10 @@ void tcp_set_state(tcp_t * tcp, tcp_state_t state)
 
 net_err_t tcp_closed_in(tcp_t * tcp, tcp_seg_t * seg)
 {
+    if(seg->hdr->f_rst)
+    {
+        tcp_send_reset(seg);
+    }
     return NET_ERR_OK;
 }
 
