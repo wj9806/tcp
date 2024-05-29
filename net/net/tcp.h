@@ -11,7 +11,18 @@
 #include "pktbuf.h"
 #include "tcp_buf.h"
 
+#define TCP_OPT_END         0
+#define TCP_OPT_NOP         1
+#define TCP_OPT_MSS         2
+
 #pragma pack(1)
+
+typedef struct {
+    uint8_t kind;
+    uint8_t length;
+    uint16_t mss;
+} tcp_opt_mss_t;
+
 typedef struct {
     //src port
     uint16_t sport;
@@ -99,6 +110,8 @@ typedef struct {
 
     tcp_state_t state;
 
+    int mss;
+
     struct {
         sock_wait_t wait;
     } conn;
@@ -164,5 +177,10 @@ static inline void tcp_set_hdr_size(tcp_hdr_t * hdr, int size)
  * abort tcp connection
  */
 net_err_t tcp_abort(tcp_t * tcp, net_err_t err);
+
+/**
+ * read tcp options
+ */
+void tcp_read_options(tcp_t * tcp, tcp_hdr_t * tcp_hdr);
 
 #endif //NET_TCP_H

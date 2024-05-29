@@ -381,3 +381,38 @@ net_err_t tcp_abort(tcp_t * tcp, net_err_t err)
     sock_wakeup(&tcp->base, SOCK_WAIT_ALL, err);
     return NET_ERR_OK;
 }
+
+void tcp_read_options(tcp_t * tcp, tcp_hdr_t * tcp_hdr)
+{
+    uint8_t * opt_start = (uint8_t *)tcp_hdr + sizeof(tcp_hdr_t);
+    uint8_t * opt_end = opt_start + (tcp_hdr_size(tcp_hdr) - sizeof(tcp_hdr_t));
+
+    if (opt_end <= opt_start)
+    {
+        return;
+    }
+
+    while (opt_start < opt_end)
+    {
+        switch (opt_start[0]) {
+            case TCP_OPT_MSS:
+                tcp_opt_mss_t * opt = (tcp_opt_mss_t *)opt_start;
+                if (opt->length == 4)
+                {
+                    uint16_t mss = x_ntohs(opt->mss);
+                    tcp->mss = mss;
+                }
+                opt_start += opt->length;
+                break;
+            case TCP_OPT_NOP:
+                opt_start++;
+                break;
+
+            case TCP_OPT_END:
+                return;
+            default:
+                opt_start++;
+                break;
+        }
+    }
+}
