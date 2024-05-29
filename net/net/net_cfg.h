@@ -63,6 +63,7 @@
 #define UDP_MAX_RECV            50
 
 #define TCP_MAX_NR              10
+#define TCP_SBUF_SIZE           1024
 
 
 #endif //NET_NET_CFG_H

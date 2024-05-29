@@ -9,6 +9,7 @@
 #include "sock.h"
 #include "net_cfg.h"
 #include "pktbuf.h"
+#include "tcp_buf.h"
 
 #pragma pack(1)
 typedef struct {
@@ -103,6 +104,8 @@ typedef struct {
     } conn;
 
     struct {
+        tcp_buf_t buf;
+        uint8_t data[TCP_SBUF_SIZE];
         //un ack
         uint32_t una;
         //next
