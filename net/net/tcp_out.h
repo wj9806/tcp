@@ -22,4 +22,10 @@ net_err_t tcp_send_ack(tcp_t * tcp, tcp_seg_t * seg);
 /** send fin*/
 net_err_t tcp_send_fin(tcp_t * tcp);
 
+/** write snd buf*/
+int tcp_write_sndbuf(tcp_t* tcp, const uint8_t* buf, int len);
+
+/** transmit tcp data packet*/
+net_err_t tcp_transmit(tcp_t * tcp);
+
 #endif //NET_TCP_OUT_H

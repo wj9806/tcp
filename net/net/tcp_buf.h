@@ -4,7 +4,9 @@
 
 #ifndef NET_TCP_BUF_H
 #define NET_TCP_BUF_H
+
 #include "stdint.h"
+#include "pktbuf.h"
 
 typedef struct {
     uint8_t * data;
@@ -33,5 +35,20 @@ static inline int tcp_buf_free_cnt(tcp_buf_t * buf)
 {
     return buf->size - buf->count;
 }
+
+/**
+ * write data to send buffer cache
+ */
+void tcp_buf_write_send(tcp_buf_t * buf, const uint8_t * buffer, int len);
+
+/**
+ * read tcp_buf_t into pktbuf_t
+ */
+void tcp_buf_read_send(tcp_buf_t * buf, int offset, pktbuf_t * dest, int count);
+
+/**
+ * remove buf
+ */
+int tcp_buf_remove(tcp_buf_t * buf, int cnt);
 
 #endif //NET_TCP_BUF_H

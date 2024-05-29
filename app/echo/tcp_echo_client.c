@@ -46,7 +46,7 @@ int tcp_echo_client_start (const char * ip, int port)
     for (int i = 0; i < sizeof(sbuf); ++i) {
         sbuf[i] = 'a' + i %26;
     }
-    for (int i = 0; i < 1; ++i) {
+    for (int i = 0; i < 10; ++i) {
         ssize_t size = send(s, sbuf, sizeof(sbuf), 0);
         if (size < 0)
         {
