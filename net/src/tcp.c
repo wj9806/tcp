@@ -125,6 +125,16 @@ static uint32_t tcp_get_iss()
 
 static net_err_t tcp_init_connect(tcp_t * tcp)
 {
+    rentry_t * rt = rt_find(&tcp->base.remote_ip);
+    if (rt->netif->mtu == 0 || !ipaddr_is_any(&rt->next_hop))
+    {
+        tcp->mss = TCP_DEFAULT_MSS;
+    }
+    else
+    {
+        tcp->mss = (int) (rt->netif->mtu - sizeof(ipv4_hdr_t) - sizeof(tcp_hdr_t));
+    }
+
     tcp_buf_init(&tcp->snd.buf, tcp->snd.data, TCP_SBUF_SIZE);
     tcp->snd.iss = tcp_get_iss();
     tcp->snd.una = tcp->snd.nxt = tcp->snd.iss;
@@ -400,7 +410,10 @@ void tcp_read_options(tcp_t * tcp, tcp_hdr_t * tcp_hdr)
                 if (opt->length == 4)
                 {
                     uint16_t mss = x_ntohs(opt->mss);
-                    tcp->mss = mss;
+                    if (mss < tcp->mss)
+                    {
+                        tcp->mss = mss;
+                    }
                 }
                 opt_start += opt->length;
                 break;

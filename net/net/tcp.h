@@ -14,6 +14,7 @@
 #define TCP_OPT_END         0
 #define TCP_OPT_NOP         1
 #define TCP_OPT_MSS         2
+#define TCP_DEFAULT_MSS     536
 
 #pragma pack(1)
 

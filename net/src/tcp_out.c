@@ -75,6 +75,7 @@ static void get_send_info(tcp_t * tcp, int * doff, int * dlen)
 {
     *doff = (int) (tcp->snd.nxt - tcp->snd.una);
     *dlen = tcp_buf_cnt(&tcp->snd.buf) - *doff;
+    *dlen = (*dlen > tcp->mss) ? tcp->mss : *dlen;
 }
 
 static int copy_send_data(tcp_t * tcp, pktbuf_t * buf, int doff, int dlen)
