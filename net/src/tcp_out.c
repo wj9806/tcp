@@ -102,6 +102,27 @@ static int copy_send_data(tcp_t * tcp, pktbuf_t * buf, int doff, int dlen)
 
 net_err_t tcp_transmit(tcp_t * tcp)
 {
+    int dlen, doff;
+    get_send_info(tcp, &doff, &dlen);
+    if (dlen < 0)
+    {
+        return NET_ERR_OK;
+    }
+
+    int seq_len = dlen;
+    if (tcp->flags.syn_out)
+    {
+        seq_len++;
+    }
+    if (tcp->flags.fin_out)
+    {
+        seq_len++;
+    }
+    if (seq_len == 0)
+    {
+        return NET_ERR_OK;
+    }
+
     pktbuf_t * buf = pktbuf_alloc(sizeof(tcp_hdr_t));
     if (!buf)
     {
@@ -117,17 +138,11 @@ net_err_t tcp_transmit(tcp_t * tcp)
     hdr->flag = 0;
     hdr->f_syn = tcp->flags.syn_out;
     hdr->f_ack = tcp->flags.irs_valid;
-    hdr->f_fin = tcp->flags.fin_out;
+    hdr->f_fin = (tcp_buf_cnt(&tcp->snd.buf) == 0) ? tcp->flags.fin_out : 0;
     hdr->win = 1024;
     hdr->urg_ptr = 0;
     tcp_set_hdr_size(hdr, sizeof(tcp_hdr_t));
 
-    int dlen, doff;
-    get_send_info(tcp, &doff, &dlen);
-    if (dlen < 0)
-    {
-        return NET_ERR_OK;
-    }
     //Copy the packets that will be sent
     copy_send_data(tcp, buf, doff, dlen);
 
@@ -153,7 +168,7 @@ net_err_t tcp_ack_process(tcp_t * tcp, tcp_seg_t * seg)
 
     int acked_cnt =(int) (tcp_hdr->ack - tcp->snd.una);
     int unacked = (int) (tcp->snd.nxt - tcp->snd.una);
-    int curr_acked = acked_cnt > unacked ? unacked : acked_cnt;
+    int curr_acked = (acked_cnt > unacked) ? unacked : acked_cnt;
     if (curr_acked > 0) {
         sock_wakeup(&tcp->base, SOCK_WAIT_WRITE, NET_ERR_OK);
         tcp->snd.una += curr_acked;

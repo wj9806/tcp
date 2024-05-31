@@ -46,14 +46,14 @@ int tcp_echo_client_start (const char * ip, int port)
     for (int i = 0; i < sizeof(sbuf); ++i) {
         sbuf[i] = 'a' + i %26;
     }
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 2; ++i) {
         ssize_t size = send(s, sbuf, sizeof(sbuf), 0);
         if (size < 0)
         {
             printf("send error\n");
         }
     }
-    fgets(sbuf, sizeof(sbuf), stdin);
+    //fgets(sbuf, sizeof(sbuf), stdin);
     close(s);
     return 0;
 #endif
