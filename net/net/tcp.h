@@ -130,6 +130,8 @@ typedef struct {
     } snd;
 
     struct {
+        tcp_buf_t buf;
+        uint8_t data[TCP_RBUF_SIZE];
         uint32_t nxt;
         uint32_t iss;
         sock_wait_t wait;
