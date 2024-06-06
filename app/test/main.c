@@ -71,6 +71,7 @@ net_err_t netdev_init()
     //buf = pktbuf_alloc(32);
     //pktbuf_fill(buf, 0xA5, 32);
     //netif_out(netif, &addr, buf);
+    pktbuf_free(buf);
     return NET_ERR_OK;
 }
 

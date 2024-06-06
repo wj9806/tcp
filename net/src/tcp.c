@@ -299,7 +299,12 @@ static net_err_t tcp_recv(struct sock_t * s, void * buf, size_t len, int flags, 
             break;
     }
 
-    //
+    int cnt = tcp_buf_read_rcv(&tcp->rcv.buf, buf, (int)len);
+    if (cnt > 0)
+    {
+        *result_len = cnt;
+        return NET_ERR_OK;
+    }
     return NET_ERR_NEED_WAIT;
 }
 

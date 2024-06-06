@@ -429,7 +429,7 @@ static net_err_t ip_normal_in(netif_t * netif, pktbuf_t * buf, ipaddr_t * src_ip
                 debug_warn(DEBUG_IP, "icmp in failed");
                 return err;
             }
-            break;
+            return NET_ERR_OK;
         }
         case NET_PROTOCOL_UDP:
         {
@@ -465,9 +465,8 @@ static net_err_t ip_normal_in(netif_t * netif, pktbuf_t * buf, ipaddr_t * src_ip
                 debug_error(DEBUG_IP, "raw in failed:%d", err);
                 return err;
             }
-            break;
+            return NET_ERR_OK;
     }
-    return NET_ERR_UNREACHABLE;
 }
 
 net_err_t ipv4_in(netif_t * netif, pktbuf_t * buf)

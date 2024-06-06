@@ -41,12 +41,14 @@ void download_test(const char * filename, int port)
         plat_printf("connect success\n");
     }
 
-    char buf[8192];
+    static char buf[8192];
     ssize_t total_size = 0;
     int rcv_size = 0;
     while ((rcv_size = recv(sockfd, buf, sizeof(buf), 0)) > 0)
     {
         fwrite(buf, 1, rcv_size, file);
+        //flush buffer to file
+        fflush(file);
         printf(".");
         total_size += rcv_size;
     }

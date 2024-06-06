@@ -84,15 +84,47 @@ net_err_t tcp_in(pktbuf_t * buf, ipaddr_t * src_ip, ipaddr_t * dest_ip)
         tcp_show_list();
         return NET_ERR_OK;
     }
+
+    net_err_t err = pktbuf_seek(buf, tcp_hdr_size(tcp_hdr));
+    if (err < 0)
+    {
+        debug_error(DEBUG_TCP, "seek failed.");
+        return NET_ERR_SIZE;
+    }
+
     tcp_state_proc[tcp->state](tcp, &seg);
     tcp_show_info("after tcp in", tcp);
+
+    pktbuf_free(buf);
     return NET_ERR_OK;
+}
+
+static int copy_data_to_rcvbuf(tcp_t * tcp, tcp_seg_t * seg) {
+    int doffset = (int) (seg->seq - tcp->rcv.nxt);
+    if (seg->data_len && doffset == 0)
+    {
+        return tcp_buf_write_rcv(&tcp->rcv.buf, doffset, seg->buf, seg->data_len);
+    }
+    return 0;
 }
 
 //from established to close_wait state
 net_err_t tcp_data_in(tcp_t * tcp, tcp_seg_t * seg)
 {
+    int size = copy_data_to_rcvbuf(tcp, seg);
+    if (size <0)
+    {
+        debug_error(DEBUG_TCP, "copy data to rcvbuf failed");
+        return NET_ERR_SIZE;
+    }
+
     int wakeup = 0;
+    if (size)
+    {
+        tcp->rcv.nxt += size;
+        wakeup++;
+    }
+
     tcp_hdr_t * tcp_hdr = seg->hdr;
     if (tcp_hdr->f_fin)
     {

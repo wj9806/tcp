@@ -76,3 +76,51 @@ int tcp_buf_remove(tcp_buf_t * buf, int cnt)
     buf->count -= cnt;
     return cnt;
 }
+
+int tcp_buf_write_rcv(tcp_buf_t * dest, int offset, pktbuf_t * src, int total)
+{
+    int start = dest->in + offset;
+    if (start >= dest->size) {
+        start = start - dest->size;
+    }
+
+    int free_size = tcp_buf_free_cnt(dest) - offset;
+    total = (total > free_size) ? free_size : total;
+
+    int size = total;
+    while (size > 0) {
+        int free_to_end = dest->size - start;
+
+        int curr_copy = size > free_to_end ? free_to_end : size;
+        pktbuf_read(src, dest->data + start, (int)curr_copy);
+
+        start += curr_copy;
+        if (start >= dest->size) {
+            start = start - dest->size;
+        }
+
+        dest->count += curr_copy;
+        size -= curr_copy;
+    }
+
+    dest->in = start;
+    return total;
+}
+
+int tcp_buf_read_rcv(tcp_buf_t * src, uint8_t * buf, int size)
+{
+    int total = size > src->count ? src->count : size;
+
+    int curr_size = 0;
+    while (curr_size < total) {
+        *buf++ = src->data[src->out++];
+
+        if (src->out >= src->size) {
+            src->out = 0;
+        }
+
+        src->count--;
+        curr_size++;
+    }
+    return total;
+}

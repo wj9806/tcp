@@ -47,6 +47,16 @@ void tcp_buf_write_send(tcp_buf_t * buf, const uint8_t * buffer, int len);
 void tcp_buf_read_send(tcp_buf_t * buf, int offset, pktbuf_t * dest, int count);
 
 /**
+ * write data to rcv buffer cache
+ */
+int tcp_buf_write_rcv(tcp_buf_t * dest, int offset, pktbuf_t * src, int total);
+
+/**
+ * read tcp_buf_t into buf
+ */
+int tcp_buf_read_rcv(tcp_buf_t * src, uint8_t * buf, int size);
+
+/**
  * remove buf
  */
 int tcp_buf_remove(tcp_buf_t * buf, int cnt);
