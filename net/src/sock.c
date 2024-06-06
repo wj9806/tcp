@@ -331,9 +331,9 @@ net_err_t sock_recv_req_in(struct func_msg_t * msg)
 
     sock_t * sock = s->sock;
     sock_data_t * data = &req->data;
-    if (!sock->ops->recvfrom)
+    if (!sock->ops->recv)
     {
-        debug_error(DEBUG_SOCKET, "recvfrom func no impl");
+        debug_error(DEBUG_SOCKET, "recv func no impl");
         return NET_ERR_NONE;
     }
 

@@ -4,8 +4,8 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <winsock2.h>
 #include "sys_plat.h"
+#include "net_api.h"
 
 void download_test(const char * filename, int port)
 {
