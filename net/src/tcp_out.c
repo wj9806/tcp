@@ -100,6 +100,27 @@ static int copy_send_data(tcp_t * tcp, pktbuf_t * buf, int doff, int dlen)
     return dlen;
 }
 
+static void write_sync_option(tcp_t * tcp, pktbuf_t * buf)
+{
+    int opt_len = sizeof(tcp_opt_mss_t);
+
+    net_err_t err = pktbuf_resize(buf, buf->total_size + opt_len);
+    if (err < 0)
+    {
+        debug_error(DEBUG_TCP, "resize pktbuf error");
+        return;
+    }
+
+    tcp_opt_mss_t mss;
+    mss.kind = TCP_OPT_MSS;
+    mss.length = sizeof(tcp_opt_mss_t);
+    mss.mss = x_ntohs(tcp->mss);
+
+    pktbuf_reset_access(buf);
+    pktbuf_seek(buf, sizeof(tcp_hdr_t));
+    pktbuf_write(buf, (uint8_t *)&mss, sizeof(mss));
+}
+
 net_err_t tcp_transmit(tcp_t * tcp)
 {
     int dlen, doff;
@@ -141,7 +162,14 @@ net_err_t tcp_transmit(tcp_t * tcp)
     hdr->f_fin = (tcp_buf_cnt(&tcp->snd.buf) == 0) ? tcp->flags.fin_out : 0;
     hdr->win = 1024;
     hdr->urg_ptr = 0;
-    tcp_set_hdr_size(hdr, sizeof(tcp_hdr_t));
+
+    if (hdr->f_syn)
+    {
+        //write mss option
+        write_sync_option(tcp, buf);
+    }
+
+    tcp_set_hdr_size(hdr, buf->total_size);
 
     //Copy the packets that will be sent
     copy_send_data(tcp, buf, doff, dlen);
