@@ -179,10 +179,15 @@ ssize_t x_recvfrom(int s, const void * buf, size_t len, int flags, const struct 
         }
 
         err = sock_wait_enter(req.wait, req.wait_tmo);
+        if (err == NET_ERR_CLOSE)
+        {
+            debug_info(DEBUG_SOCKET, "remote close");
+            return 0;
+        }
         if (err < 0)
         {
             debug_error(DEBUG_SOCKET, "recv failed");
-            return err;
+            return -1;
         }
     }
 }
@@ -218,10 +223,15 @@ ssize_t x_recv(int s, const void * buf, size_t len, int flags)
         }
 
         err = sock_wait_enter(req.wait, req.wait_tmo);
+        if (err == NET_ERR_CLOSE)
+        {
+            debug_info(DEBUG_SOCKET, "remote close");
+            return 0;
+        }
         if (err < 0)
         {
             debug_error(DEBUG_SOCKET, "recv failed");
-            return err;
+            return -1;
         }
     }
 }

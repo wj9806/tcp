@@ -59,12 +59,12 @@ void download_test(const char * filename, int port)
     }
     printf("rcv file size : %d\n", (int) total_size);
     printf("rcv file ok\n");
-    closesocket(sockfd);
+    close(sockfd);
     fclose(file);
     return;
 
     failed:
-    closesocket(sockfd);
+    close(sockfd);
     if(file)
     {
         fclose(file);

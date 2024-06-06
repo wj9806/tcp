@@ -278,6 +278,7 @@ static net_err_t tcp_send(struct sock_t * s, const void * buf, size_t len, int f
 static net_err_t tcp_recv(struct sock_t * s, void * buf, size_t len, int flags, ssize_t * result_len)
 {
     tcp_t  * tcp = (tcp_t *)s;
+    int need_wait = NET_ERR_NEED_WAIT;
     switch (tcp->state) {
         case TCP_STATE_LAST_ACK:
         case TCP_STATE_CLOSED:
@@ -285,6 +286,8 @@ static net_err_t tcp_recv(struct sock_t * s, void * buf, size_t len, int flags, 
             return NET_ERR_CLOSE;
         case TCP_STATE_CLOSE_WAIT:
         case TCP_STATE_CLOSING:
+            need_wait = NET_ERR_OK;
+            break;
         case TCP_STATE_FIN_WAIT_1:
         case TCP_STATE_FIN_WAIT_2:
         case TCP_STATE_ESTABLISHED:
@@ -298,14 +301,14 @@ static net_err_t tcp_recv(struct sock_t * s, void * buf, size_t len, int flags, 
         default:
             break;
     }
-
+    *result_len = 0;
     int cnt = tcp_buf_read_rcv(&tcp->rcv.buf, buf, (int)len);
     if (cnt > 0)
     {
         *result_len = cnt;
         return NET_ERR_OK;
     }
-    return NET_ERR_NEED_WAIT;
+    return need_wait;
 }
 
 static tcp_t * tcp_alloc(int wait, int family, int protocol)
