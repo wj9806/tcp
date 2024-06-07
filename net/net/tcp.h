@@ -186,4 +186,9 @@ net_err_t tcp_abort(tcp_t * tcp, net_err_t err);
  */
 void tcp_read_options(tcp_t * tcp, tcp_hdr_t * tcp_hdr);
 
+/**
+ * get tcp rcv window size
+ */
+int tcp_rcv_window(tcp_t * tcp);
+
 #endif //NET_TCP_H

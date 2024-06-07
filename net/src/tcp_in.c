@@ -36,6 +36,13 @@ net_err_t tcp_in(pktbuf_t * buf, ipaddr_t * src_ip, ipaddr_t * dest_ip)
         [TCP_STATE_LAST_ACK] = tcp_last_ack_in,
     };
     tcp_hdr_t * tcp_hdr = (tcp_hdr_t*) pktbuf_data(buf);
+    if (pktbuf_set_cont(buf, sizeof(tcp_hdr_t)) < 0)
+    {
+        debug_error(DEBUG_TCP, "set pktbuf cond failed");
+        return -1;
+    }
+    tcp_hdr = (tcp_hdr_t*) pktbuf_data(buf);
+
     if (tcp_hdr->checksum)
     {
         pktbuf_reset_access(buf);

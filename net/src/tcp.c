@@ -466,3 +466,10 @@ void tcp_read_options(tcp_t * tcp, tcp_hdr_t * tcp_hdr)
         }
     }
 }
+
+int tcp_rcv_window(tcp_t * tcp)
+{
+    int windows = tcp_buf_free_cnt(&tcp->rcv.buf);
+    return windows;
+
+}
