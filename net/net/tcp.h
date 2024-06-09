@@ -16,6 +16,10 @@
 #define TCP_OPT_MSS         2
 #define TCP_DEFAULT_MSS     536
 
+//a <= b
+#define TCP_SEQ_LE(a, b)    (((int32_t)(a) - (int32_t)(b)) <= 0)
+#define TCP_SEQ_LT(a, b)    (((int32_t)(a) - (int32_t)(b)) < 0)
+
 #pragma pack(1)
 
 typedef struct {

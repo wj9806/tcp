@@ -188,6 +188,16 @@ net_err_t tcp_send_syn(tcp_t * tcp)
 net_err_t tcp_ack_process(tcp_t * tcp, tcp_seg_t * seg)
 {
     tcp_hdr_t * tcp_hdr = seg->hdr;
+
+    if (TCP_SEQ_LE(tcp_hdr->ack, tcp->snd.una))
+    {
+        return NET_ERR_OK;
+    }
+    else if(TCP_SEQ_LT(tcp->snd.nxt, tcp_hdr->ack))
+    {
+        return NET_ERR_UNREACHABLE;
+    }
+
     if (tcp->flags.syn_out)
     {
         tcp->snd.una++;
