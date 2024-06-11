@@ -204,4 +204,19 @@ void tcp_read_options(tcp_t * tcp, tcp_hdr_t * tcp_hdr);
  */
 int tcp_rcv_window(tcp_t * tcp);
 
+/**
+ * start tcp keepalive mechanism
+ */
+void tcp_keepalive_start(tcp_t * tcp, int run);
+
+/**
+ * refresh keepalive idle time
+ */
+void tcp_keepalive_restart(tcp_t * tcp);
+
+/**
+ * shutdown all timers of tcp
+ */
+void tcp_kill_all_timers(tcp_t * tcp);
+
 #endif //NET_TCP_H
