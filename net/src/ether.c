@@ -176,7 +176,7 @@ net_err_t ether_raw_out(netif_t * netif, uint16_t protocol, const uint8_t * dest
     pkt->hdr.protocol = x_htons(protocol);
 
     display_ether_pkt("ether out", pkt, size);
-    if (plat_memcpy(netif->hwaddr.addr, dest, ETHER_HWA_SIZE) == 0)
+    if (plat_memcmp(netif->hwaddr.addr, dest, ETHER_HWA_SIZE) == 0)
     {
         return netif_put_in(netif, buf, -1);
     }

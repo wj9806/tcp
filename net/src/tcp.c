@@ -51,8 +51,6 @@ void tcp_show_pkt(char * msg, tcp_hdr_t * tcp_hdr, pktbuf_t * buf)
     plat_printf("\n   len=%d\n", buf->total_size - tcp_hdr_size(tcp_hdr));
 }
 
-#endif
-
 void tcp_show_list(void)
 {
     plat_printf("--------------tcp list--------------\n");
@@ -63,7 +61,7 @@ void tcp_show_list(void)
         tcp_show_info("", tcp);
     }
 }
-
+#endif
 
 net_err_t tcp_init()
 {
@@ -554,6 +552,8 @@ static void tcp_alive_tmo(struct net_timer_t * timer, void * arg)
     if (++tcp->conn.keep_retry <= tcp->conn.keep_cnt)
     {
         //send keepalive packet
+        tcp_send_keepalive(tcp);
+
         net_timer_remove(&tcp->conn.keep_timer);
         net_timer_add(&tcp->conn.keep_timer, "tcp-keepalive-timer", tcp_alive_tmo, tcp, tcp->conn.keep_intvl * 1000, 0);
         debug_info(DEBUG_TCP, "tcp alive tmo, retry: %d", tcp->conn.keep_cnt);
@@ -561,8 +561,8 @@ static void tcp_alive_tmo(struct net_timer_t * timer, void * arg)
     else
     {
         //send rst
-
-        tcp_abort(tcp, NET_ERR_TMO);
+        tcp_send_reset_for_tcp(tcp);
+        tcp_abort(tcp, NET_ERR_CLOSE);
         debug_error(DEBUG_TCP, "tcp alive tmo, give up");
     }
 }

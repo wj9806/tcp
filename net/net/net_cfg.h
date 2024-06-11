@@ -17,13 +17,13 @@
 #define DEBUG_ETHER             DEBUG_LEVEL_ERROR
 #define DEBUG_TOOLS             DEBUG_LEVEL_ERROR
 #define DEBUG_TIMER             DEBUG_LEVEL_ERROR
-#define DEBUG_ARP               DEBUG_LEVEL_ERROR
+#define DEBUG_ARP               DEBUG_LEVEL_INFO
 #define DEBUG_IP                DEBUG_LEVEL_ERROR
 #define DEBUG_ICMP              DEBUG_LEVEL_ERROR
 #define DEBUG_SOCKET            DEBUG_LEVEL_ERROR
 #define DEBUG_RAW               DEBUG_LEVEL_ERROR
 #define DEBUG_UDP               DEBUG_LEVEL_ERROR
-#define DEBUG_TCP               DEBUG_LEVEL_INFO
+#define DEBUG_TCP               DEBUG_LEVEL_ERROR
 
 
 #define EXMSG_MSG_CNT           10
@@ -48,7 +48,7 @@
 #define ARP_TIMER_TMO           1
 #define ARP_ENTRY_PENDING_TMO   3
 #define ARP_ENTRY_RETRY_CNT     5
-#define ARP_ENTRY_STABLE_TMO    5
+#define ARP_ENTRY_STABLE_TMO    (20*60)
 
 #define IP_FRAGS_MAX_NR         5
 #define IP_FRAG_MAX_BUF_NR      10

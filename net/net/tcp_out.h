@@ -10,6 +10,12 @@
 /** send tcp reset packet */
 net_err_t tcp_send_reset(tcp_seg_t * seg);
 
+/** send tcp rst packet for given tcp */
+net_err_t tcp_send_reset_for_tcp(tcp_t * tcp);
+
+/** send tcp keepalive packet */
+net_err_t tcp_send_keepalive(tcp_t * tcp);
+
 /** send tcp syn packet */
 net_err_t tcp_send_syn(tcp_t * tcp);
 
