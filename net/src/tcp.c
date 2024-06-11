@@ -311,6 +311,69 @@ static net_err_t tcp_recv(struct sock_t * s, void * buf, size_t len, int flags, 
     return need_wait;
 }
 
+static net_err_t tcp_setopt(struct sock_t * s, int level, int optname, const char * optval, int optlen)
+{
+    net_err_t err = sock_setopt(s, level, optname, optval, optlen);
+    if (err == NET_ERR_OK)
+    {
+        return err;
+    }
+    else if (err < 0 && (err != NET_ERR_UNKNOWN))
+    {
+        return err;
+    }
+
+    tcp_t * tcp = (tcp_t *)s;
+    if (level == SOL_SOCKET)
+    {
+        if (optname == SO_KEEPALIVE)
+        {
+            if (optlen != sizeof(int))
+            {
+                debug_error(DEBUG_TCP, "param size error");
+                return NET_ERR_PARAM;
+            }
+            tcp->flags.keep_enable = *(int *)optval;
+            return NET_ERR_OK;
+        }
+        return NET_ERR_PARAM;
+    }
+    else if(level == SOL_TCP)
+    {
+        switch (optname) {
+            case TCP_KEEPIDLE:
+                if (optlen != sizeof(int))
+                {
+                    debug_error(DEBUG_TCP, "param size error");
+                    return NET_ERR_PARAM;
+                }
+                tcp->conn.keep_idle = *(int *)optval;
+                break;
+            case TCP_KEEPINTVL:
+                if (optlen != sizeof(int))
+                {
+                    debug_error(DEBUG_TCP, "param size error");
+                    return NET_ERR_PARAM;
+                }
+                tcp->conn.keep_intvl = *(int *)optval;
+                break;
+            case TCP_KEEPCNT:
+                if (optlen != sizeof(int))
+                {
+                    debug_error(DEBUG_TCP, "param size error");
+                    return NET_ERR_PARAM;
+                }
+                tcp->conn.keep_cnt = *(int *)optval;
+                break;
+            default:
+                debug_error(DEBUG_TCP, "unknown param");
+                return NET_ERR_PARAM;
+        }
+    }
+
+    return NET_ERR_OK;
+}
+
 static tcp_t * tcp_alloc(int wait, int family, int protocol)
 {
     //tcp function table
@@ -319,6 +382,7 @@ static tcp_t * tcp_alloc(int wait, int family, int protocol)
             .close = tcp_close,
             .send = tcp_send,
             .recv = tcp_recv,
+            .setopt = tcp_setopt,
     };
 
     tcp_t * tcp = tcp_get_free(wait);
@@ -338,6 +402,11 @@ static tcp_t * tcp_alloc(int wait, int family, int protocol)
         return (tcp_t *)0;
     }
     tcp->state = TCP_STATE_CLOSED;
+    tcp->flags.keep_enable = 0;
+    tcp->conn.keep_idle = TCP_KEEPALIVE_TIME;
+    tcp->conn.keep_intvl = TCP_KEEPALIVE_INTVL;
+    tcp->conn.keep_cnt = TCP_KEEPALIVE_PROBES;
+
     if(sock_wait_init(&tcp->conn.wait))
     {
         debug_error(DEBUG_TCP, "create conn.wait failed.");

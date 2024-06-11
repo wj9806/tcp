@@ -10,6 +10,7 @@
 #include "net_cfg.h"
 #include "pktbuf.h"
 #include "tcp_buf.h"
+#include "timer.h"
 
 #define TCP_OPT_END         0
 #define TCP_OPT_NOP         1
@@ -112,6 +113,7 @@ typedef struct {
         uint32_t fin_in : 1;
         uint32_t fin_out : 1;
         uint32_t irs_valid : 1;
+        uint32_t keep_enable : 1;
     } flags;
 
     tcp_state_t state;
@@ -120,6 +122,12 @@ typedef struct {
 
     struct {
         sock_wait_t wait;
+
+        int keep_idle;
+        int keep_intvl;
+        int keep_cnt;
+        int keep_retry;
+        net_timer_t keep_timer;
     } conn;
 
     struct {

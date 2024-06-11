@@ -41,6 +41,16 @@ void download_test(const char * filename, int port)
         plat_printf("connect success\n");
     }
 
+    int keepalive = 1; //enable keepalive
+    int keepidle = 5; //idle time
+    int keepinterval = 1; //interval
+    int keepcount = 10; //send keepalive packet's count
+
+    setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, (void *)&keepalive, sizeof(keepalive));
+    setsockopt(sockfd, SOL_TCP, TCP_KEEPIDLE, (void *)&keepidle, sizeof(keepidle));
+    setsockopt(sockfd, SOL_TCP, TCP_KEEPINTVL, (void *)&keepinterval, sizeof(keepinterval));
+    setsockopt(sockfd, SOL_TCP, TCP_KEEPCNT, (void *)&keepcount, sizeof(keepcount));
+
     static char buf[8192];
     ssize_t total_size = 0;
     int rcv_size = 0;

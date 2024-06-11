@@ -66,5 +66,8 @@
 #define TCP_SBUF_SIZE           4096
 #define TCP_RBUF_SIZE           4096
 
+#define TCP_KEEPALIVE_TIME      (20 * 60 * 60)
+#define TCP_KEEPALIVE_INTVL     5
+#define TCP_KEEPALIVE_PROBES    10
 
 #endif //NET_NET_CFG_H

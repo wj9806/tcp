@@ -32,10 +32,21 @@
 #undef SOL_SOCKET
 #define SOL_SOCKET 0
 
+#undef SOL_TCP
+#define SOL_TCP 1
+
 #undef SO_SNDTIMEO
 #define SO_SNDTIMEO     1
 #undef SO_RCVTIMEO
 #define SO_RCVTIMEO     2
+#undef SO_KEEPALIVE
+#define SO_KEEPALIVE    3
+#undef TCP_KEEPIDLE
+#define TCP_KEEPIDLE     4
+#undef TCP_KEEPINTVL
+#define TCP_KEEPINTVL    5
+#undef TCP_KEEPCNT
+#define TCP_KEEPCNT      6
 
 struct x_timeval {
     long    tv_sec;

@@ -353,8 +353,7 @@ net_err_t sock_setopt(struct sock_t * s, int level, int optname, const char * op
 {
     if (level != SOL_SOCKET)
     {
-        debug_error(DEBUG_SOCKET, "unknown level");
-        return NET_ERR_PARAM;
+        return NET_ERR_UNKNOWN;
     }
 
     switch (optname) {
@@ -378,10 +377,10 @@ net_err_t sock_setopt(struct sock_t * s, int level, int optname, const char * op
                 s->send_tmo = time_ms;
                 return NET_ERR_OK;
             }
-            break;
         default:
             break;
     }
+    return NET_ERR_UNKNOWN;
 }
 
 net_err_t sock_setsockopt_req_in(struct func_msg_t * msg)
