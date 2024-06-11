@@ -109,6 +109,7 @@ typedef struct {
 
     struct {
         uint32_t syn_out: 1;
+        uint32_t fin_in : 1;
         uint32_t fin_out : 1;
         uint32_t irs_valid : 1;
     } flags;
