@@ -377,6 +377,66 @@ static net_err_t tcp_setopt(struct sock_t * s, int level, int optname, const cha
 
 static net_err_t tcp_bind(struct sock_t * s, const struct x_sockaddr * addr, x_socklen_t len)
 {
+    tcp_t * tcp = (tcp_t *)s;
+
+    if (tcp->state != TCP_STATE_CLOSED)
+    {
+        debug_error(DEBUG_TCP, "state error");
+        return NET_ERR_STATE;
+    }
+
+    if (s->local_port != NET_PORT_EMPTY)
+    {
+        debug_error(DEBUG_TCP, "tcp already bind");
+        return NET_ERR_PARAM;
+    }
+
+    const struct x_sockaddr_in * addr_in = (const struct x_sockaddr_in *) addr;
+    if (addr_in->sin_port == NET_PORT_EMPTY)
+    {
+        debug_error(DEBUG_TCP, "port empty");
+        return NET_ERR_PARAM;
+    }
+
+    ipaddr_t local_ip;
+    ipaddr_from_buf(&local_ip, (const uint8_t *) &addr_in->sin_addr);
+    if (!ipaddr_is_any(&local_ip))
+    {
+        rentry_t * rt = rt_find(&local_ip);
+        if (rt == (rentry_t *)0)
+        {
+            debug_error(DEBUG_TCP, "ipaddr error");
+            return NET_ERR_PARAM;
+        }
+
+        if (!ipaddr_is_equal(&local_ip, &rt->netif->ipaddr))
+        {
+            debug_error(DEBUG_TCP, "ipaddr error");
+            return NET_ERR_PARAM;
+        }
+    }
+
+    node_t * node;
+    list_for_each(node, &tcp_list)
+    {
+        sock_t * curr = (sock_t*) list_node_parent(node, sock_t , node);
+        if (curr == s)
+        {
+            continue;
+        }
+        if (curr->remote_port != NET_PORT_EMPTY)
+        {
+            continue;
+        }
+        if (ipaddr_is_equal(&curr->local_ip, &local_ip) && (curr->local_port == addr_in->sin_port))
+        {
+            debug_error(DEBUG_TCP, "ipaddr and port already bound");
+            return NET_ERR_PARAM;
+        }
+    }
+
+    ipaddr_copy(&s->local_ip, &local_ip);
+    s->local_port = x_ntohs(addr_in->sin_port);
     return NET_ERR_OK;
 }
 
