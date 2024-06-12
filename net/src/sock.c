@@ -472,7 +472,22 @@ net_err_t sock_bind_req_in(struct func_msg_t * msg)
 
 net_err_t sock_listen_req_in(struct func_msg_t * msg)
 {
-    return NET_ERR_OK;
+    sock_req_t * req = (sock_req_t *)msg->param;
+
+    x_socket_t * s = get_socket(req->sockfd);
+    if (!s)
+    {
+        debug_error(DEBUG_SOCKET, "param error");
+        return NET_ERR_PARAM;
+    }
+
+    sock_t * sock = s->sock;
+    sock_listen_t * listen = &req->listen;
+    if (!sock->ops->listen)
+    {
+        return NET_ERR_NOT_SUPPORT;
+    }
+    return sock->ops->listen(sock, listen->backlog);
 }
 
 net_err_t sock_accept_req_in(struct func_msg_t * msg)

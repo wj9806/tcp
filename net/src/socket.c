@@ -359,6 +359,12 @@ int x_bind(int s, const struct x_sockaddr * addr, x_socklen_t len)
 
 int x_listen(int s, int backlog)
 {
+    if (backlog <= 0)
+    {
+        debug_error(DEBUG_SOCKET, "param error");
+        return NET_ERR_PARAM;
+    }
+
     sock_req_t req;
     req.wait = 0;
     req.sockfd = s;

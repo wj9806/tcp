@@ -122,6 +122,7 @@ typedef struct {
 
     struct {
         sock_wait_t wait;
+        int backlog;
 
         int keep_idle;
         int keep_intvl;
