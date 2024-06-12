@@ -50,7 +50,7 @@ typedef struct {
     //listen
     net_err_t (*listen) (struct sock_t * s, int backlog);
     //accept
-    net_err_t (*accept) (struct sock_t * s, struct x_sockaddr * addr, x_socklen_t len, struct sock_t ** client);
+    net_err_t (*accept) (struct sock_t * s, struct x_sockaddr * addr, x_socklen_t * len, struct sock_t ** client);
 } sock_ops_t;
 
 typedef struct sock_t {

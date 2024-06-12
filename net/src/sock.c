@@ -492,6 +492,48 @@ net_err_t sock_listen_req_in(struct func_msg_t * msg)
 
 net_err_t sock_accept_req_in(struct func_msg_t * msg)
 {
+    sock_req_t * req = (sock_req_t *)msg->param;
+
+    x_socket_t * s = get_socket(req->sockfd);
+    if (!s)
+    {
+        debug_error(DEBUG_SOCKET, "param error");
+        return NET_ERR_PARAM;
+    }
+
+    sock_t * sock = s->sock;
+    sock_accept_t * accept = &req->accept;
+    if (!sock->ops->accept)
+    {
+        return NET_ERR_NOT_SUPPORT;
+    }
+
+    sock_t * client = (sock_t*)0;
+    net_err_t err = sock->ops->accept(sock, accept->addr, accept->len, &client);
+    if (err < 0)
+    {
+        debug_error(DEBUG_SOCKET, "accept error");
+        return err;
+    }
+    else if(err == NET_ERR_NEED_WAIT)
+    {
+        if (sock->conn_wait)
+        {
+            sock_wait_add(sock->conn_wait, sock->rcv_tmo, req);
+        }
+    }
+    else
+    {
+        x_socket_t * child_socket = socket_alloc();
+        if (child_socket == (x_socket_t*)0)
+        {
+            debug_error(DEBUG_SOCKET, "no socket");
+            return NET_ERR_NONE;
+        }
+        child_socket->sock = client;
+        accept->client = get_index(child_socket);
+    }
+
     return NET_ERR_OK;
 }
 

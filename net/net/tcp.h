@@ -105,8 +105,10 @@ typedef enum {
     TCP_STATE_MAX
 } tcp_state_t;
 
-typedef struct {
+typedef struct tcp_t {
     sock_t base;
+
+    struct tcp_t * parent;
 
     struct {
         uint32_t syn_out: 1;
@@ -114,6 +116,7 @@ typedef struct {
         uint32_t fin_out : 1;
         uint32_t irs_valid : 1;
         uint32_t keep_enable : 1;
+        uint32_t inactive : 1;
     } flags;
 
     tcp_state_t state;
