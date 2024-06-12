@@ -32,6 +32,12 @@ net_err_t sock_connect_req_in(struct func_msg_t * msg);
 //bind socket
 net_err_t sock_bind_req_in(struct func_msg_t * msg);
 
+//listen
+net_err_t sock_listen_req_in(struct func_msg_t * msg);
+
+//accept
+net_err_t sock_accept_req_in(struct func_msg_t * msg);
+
 int x_socket(int family, int type, int protocol)
 {
     sock_req_t req;
@@ -353,10 +359,58 @@ int x_bind(int s, const struct x_sockaddr * addr, x_socklen_t len)
 
 int x_listen(int s, int backlog)
 {
+    sock_req_t req;
+    req.wait = 0;
+    req.sockfd = s;
+    req.listen.backlog = backlog;
+    net_err_t err = exmsg_func_exec(sock_listen_req_in, &req);
+    if (err < 0)
+    {
+        debug_info(DEBUG_SOCKET, "listen failed");
+        return -1;
+    }
     return 0;
 }
 
 int x_accept(int s, struct x_sockaddr * addr, x_socklen_t * len)
 {
-    return 0;
+    if (!addr || !len)
+    {
+        debug_error(DEBUG_SOCKET, "param error");
+        return -1;
+    }
+
+    while (1)
+    {
+        sock_req_t req;
+        req.wait = (sock_wait_t *)0;
+        req.wait_tmo = 0;
+        req.sockfd = s;
+        req.accept.addr = addr;
+        req.accept.len = len;
+        req.accept.client = -1;
+
+        net_err_t err = exmsg_func_exec(sock_accept_req_in, &req);
+        if (err < 0)
+        {
+            debug_error(DEBUG_SOCKET, "accept failed");
+            return -1;
+        }
+
+        if (req.accept.client >= 0)
+        {
+            debug_info(DEBUG_SOCKET, "get new connection: %d", req.accept.client);
+            return req.accept.client;
+        }
+
+        if (req.wait)
+        {
+            err = sock_wait_enter(req.wait, req.wait_tmo);
+            if (err < 0)
+            {
+                debug_error(DEBUG_SOCKET, "wait failed");
+                return err;
+            }
+        }
+    }
 }

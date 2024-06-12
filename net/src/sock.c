@@ -469,6 +469,17 @@ net_err_t sock_bind_req_in(struct func_msg_t * msg)
     return sock->ops->bind(sock, bind->addr, bind->len);
 }
 
+
+net_err_t sock_listen_req_in(struct func_msg_t * msg)
+{
+    return NET_ERR_OK;
+}
+
+net_err_t sock_accept_req_in(struct func_msg_t * msg)
+{
+    return NET_ERR_OK;
+}
+
 net_err_t sock_connect(sock_t * sock, const struct x_sockaddr * addr, x_socklen_t len)
 {
     struct x_sockaddr_in* remote = (struct x_sockaddr_in*)addr;

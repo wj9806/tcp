@@ -47,6 +47,10 @@ typedef struct {
     net_err_t (*connect)(struct sock_t * s, const struct x_sockaddr * addr, x_socklen_t len);
     //bind socket
     net_err_t (*bind)(struct sock_t * s, const struct x_sockaddr * addr, x_socklen_t len);
+    //listen
+    net_err_t (*listen) (struct sock_t * s, int backlog);
+    //accept
+    net_err_t (*accept) (struct sock_t * s, struct x_sockaddr * addr, x_socklen_t len, struct sock_t ** client);
 } sock_ops_t;
 
 typedef struct sock_t {
@@ -110,6 +114,17 @@ typedef struct {
 } sock_bind_t;
 
 typedef struct {
+    int backlog;
+} sock_listen_t;
+
+typedef struct {
+    struct x_sockaddr * addr;
+    x_socklen_t * len;
+
+    int client;
+} sock_accept_t;
+
+typedef struct {
     sock_wait_t * wait;
     int wait_tmo;
     int sockfd;
@@ -119,6 +134,8 @@ typedef struct {
         sock_opt_t opt;
         sock_conn_t conn;
         sock_bind_t bind;
+        sock_listen_t listen;
+        sock_accept_t accept;
     };
 } sock_req_t;
 
