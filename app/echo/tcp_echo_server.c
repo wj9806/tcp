@@ -1,5 +1,6 @@
 #include "tcp_echo_server.h"
 #include "sys_plat.h"
+#include "net_api.h"
 
 /**
  *  TCP server
@@ -13,10 +14,7 @@ void tcp_echo_server_start(int port)
 {
     plat_printf("tcp echo server, port: %d\n", port);
 
-    WSADATA wsadata;
-    WSAStartup(MAKEWORD(2, 2), &wsadata);
-
-    SOCKET s = socket(AF_INET, SOCK_STREAM, 0);
+    int s = socket(AF_INET, SOCK_STREAM, 0);
     if (s < 0)
     {
         plat_printf("tcp echo server: open socket failed\n");
@@ -39,7 +37,7 @@ void tcp_echo_server_start(int port)
     {
         struct sockaddr_in client_addr;
         socklen_t addr_len = sizeof(client_addr);
-        SOCKET client = accept(s, &client_addr, &addr_len);
+        int client = accept(s, &client_addr, &addr_len);
         if (client < 0)
         {
             plat_printf("accept error");
@@ -57,11 +55,11 @@ void tcp_echo_server_start(int port)
             send(client, buf, size, 0);
         }
 
-        closesocket(s);
+        close(s);
     }
 end:
     if (s >= 0)
     {
-        closesocket(s);
+        close(s);
     }
 }

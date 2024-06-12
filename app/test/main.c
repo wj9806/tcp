@@ -12,6 +12,7 @@
 #include "echo/udp_echo_client.h"
 #include "echo/udp_echo_server.h"
 #include "echo/tcp_echo_client.h"
+#include "echo/tcp_echo_server.h"
 
 #define DEBUG_TEST    DEBUG_LEVEL_INFO
 
@@ -277,7 +278,9 @@ int main()
     //udp_echo_client_start(friend0_ip, 1000);
     //udp_echo_server_start(2000);
     //tcp_echo_client_start(friend0_ip, 2000);
-    download_test("hello.txt", 2000);
+
+    tcp_echo_server_start(2000);
+    //download_test("hello.txt", 2000);
 
     int arg = 0x12345;
     net_err_t err = exmsg_func_exec(test_func, &arg);

@@ -24,6 +24,8 @@
 #define send(s, buf, len, flags)                            x_send(s, buf, len, flags)
 #define recv(s, buf, len, flags)                            x_recv(s, buf, len, flags)
 #define bind(s, addr, len)                                  x_bind(s, addr, len)
+#define listen(s, backlog)                                  x_listen(s, backlog)
+#define accept(s, addr, len)                                x_accept(s, addr, len)
 
 #define x_htons(v)        swap_u16(v)
 #define x_ntohs(v)        swap_u16(v)
