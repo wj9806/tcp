@@ -131,9 +131,9 @@ net_err_t tcp_in(pktbuf_t * buf, ipaddr_t * src_ip, ipaddr_t * dest_ip)
         return NET_ERR_SIZE;
     }
 
-    if ((tcp->state != TCP_STATE_CLOSED)
-        && (tcp->state != TCP_STATE_SYN_SENT)
-        && (tcp->state != TCP_STATE_LISTEN))
+    if (tcp->state != TCP_STATE_CLOSED
+        && tcp->state != TCP_STATE_SYN_SENT
+        && tcp->state != TCP_STATE_LISTEN)
     {
         if (!tcp_seq_acceptable(tcp, &seg))
         {

@@ -585,27 +585,30 @@ sock_t * tcp_create(int family, int protocol)
 
 tcp_t * tcp_find(ipaddr_t * local_ip, uint16_t local_port, ipaddr_t * remote_ip, uint16_t remote_port)
 {
-    tcp_t * tcp = (tcp_t *)0;
-    node_t * node;
-    list_for_each(node, &tcp_list)
-    {
-        sock_t * s = (sock_t *) list_node_parent(node, sock_t, node);
-        if ((s->local_port == local_port )
-            && ipaddr_is_equal(&s->remote_ip, remote_ip)
-            && (s->remote_port == remote_port))
-        {
-            if (ipaddr_is_any(&s->local_ip))
-            {
-                return (tcp_t*)s;
-            } else if (ipaddr_is_equal(&s->local_ip, local_ip))
-            {
-                return (tcp_t*)s;
-            } else{
+    sock_t* match = (sock_t*)0;
+
+    node_t* node;
+    list_for_each(node, &tcp_list) {
+        sock_t* s = list_node_parent(node, sock_t, node);
+
+        if (ipaddr_is_equal(&s->local_ip, local_ip) && (s->local_port == local_port) &&
+            ipaddr_is_equal(&s->remote_ip, remote_ip) && (s->remote_port == remote_port)) {
+            return (tcp_t*)s;
+        }
+
+        tcp_t * tcp = (tcp_t *)s;
+        if ((tcp->state == TCP_STATE_LISTEN) && (s->local_port == local_port)) {
+            if (!ipaddr_is_any(&s->local_ip) && !ipaddr_is_equal(&s->local_ip, local_ip)) {
                 continue;
+            }
+
+            if (s->local_port == local_port) {
+                match = s;
             }
         }
     }
-    return tcp;
+
+    return (tcp_t*)match;
 }
 
 net_err_t tcp_abort(tcp_t * tcp, net_err_t err)
@@ -638,8 +641,12 @@ void tcp_read_options(tcp_t * tcp, tcp_hdr_t * tcp_hdr)
                     {
                         tcp->mss = mss;
                     }
+                    opt_start += opt->length;
                 }
-                opt_start += opt->length;
+                else
+                {
+                    opt_start++;
+                }
                 break;
             case TCP_OPT_NOP:
                 opt_start++;
@@ -715,4 +722,46 @@ void tcp_keepalive_restart(tcp_t * tcp)
 void tcp_kill_all_timers(tcp_t * tcp)
 {
     net_timer_remove(&tcp->conn.keep_timer);
+}
+
+int tcp_backlog_count(tcp_t * tcp)
+{
+    int count = 0;
+
+    node_t * node;
+    list_for_each(node, &tcp_list)
+    {
+        tcp_t * child = (tcp_t *)list_node_parent(node, sock_t, node);
+        if(child->parent == tcp && child->flags.inactive)
+        {
+            count++;
+        }
+    }
+    return count;
+}
+
+tcp_t * tcp_create_child(tcp_t* tcp, tcp_seg_t * seg)
+{
+    tcp_t * child = tcp_alloc(0, tcp->base.family, tcp->base.protocol);
+    if (!child)
+    {
+        debug_error(DEBUG_TCP, "no child tcp");
+        return (tcp_t *)0;
+    }
+
+    ipaddr_copy(&child->base.local_ip, &seg->local_ip);
+    ipaddr_copy(&child->base.remote_ip, &seg->remote_ip);
+    child->base.local_port = seg->hdr->dport;
+    child->base.remote_port = seg->hdr->sport;
+    child->parent = tcp;
+    child->flags.irs_valid = 1;
+    child->flags.inactive = 1;
+
+    tcp_init_connect(child);
+    child->rcv.iss = seg->seq;
+    child->rcv.nxt = child->rcv.iss + 1;
+    tcp_read_options(child, seg->hdr);
+
+    tcp_insert(child);
+    return child;
 }

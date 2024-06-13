@@ -223,4 +223,14 @@ void tcp_keepalive_restart(tcp_t * tcp);
  */
 void tcp_kill_all_timers(tcp_t * tcp);
 
+/**
+ * get current tcp backlog queue count
+ */
+int tcp_backlog_count(tcp_t * tcp);
+
+/**
+ * create child tcp
+ */
+tcp_t * tcp_create_child(tcp_t* tcp, tcp_seg_t * seg);
+
 #endif //NET_TCP_H
