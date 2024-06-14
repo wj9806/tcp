@@ -467,7 +467,7 @@ static net_err_t tcp_accept(struct sock_t * s, struct x_sockaddr * addr, x_sockl
             continue;
         }
 
-        if (tcp->parent != tcp)
+        if (tcp->parent != (tcp_t *)s)
         {
             continue;
         }

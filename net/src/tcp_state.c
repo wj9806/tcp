@@ -128,6 +128,34 @@ net_err_t tcp_syn_sent_in(tcp_t * tcp, tcp_seg_t * seg)
 
 net_err_t tcp_syn_recv_in(tcp_t * tcp, tcp_seg_t * seg)
 {
+    tcp_hdr_t * tcp_hdr = seg->hdr;
+
+    if (tcp_hdr->f_rst)
+    {
+        return tcp_abort(tcp, NET_ERR_RESET);
+    }
+    if (tcp_hdr->f_syn)
+    {
+        debug_warn(DEBUG_TCP, "recv a sync");
+        tcp_send_reset(seg);
+        return tcp_abort(tcp, NET_ERR_RESET);
+    }
+    if(tcp_ack_process(tcp, seg) < 0)
+    {
+        debug_warn(DEBUG_TCP, "ack process failed");
+        return NET_ERR_UNREACHABLE;
+    }
+
+    if (tcp_hdr->f_fin)
+    {
+        return NET_ERR_UNKNOWN;
+    }
+
+    tcp_set_state(tcp, TCP_STATE_ESTABLISHED);
+    if (tcp->parent)
+    {
+        sock_wakeup((sock_t*)tcp->parent, SOCK_WAIT_CONN, NET_ERR_OK);
+    }
     return NET_ERR_OK;
 }
 
