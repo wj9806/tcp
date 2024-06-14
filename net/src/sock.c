@@ -415,18 +415,40 @@ net_err_t sock_close_req_in(struct func_msg_t * msg)
     if (!sock->ops->close)
     {
         debug_error(DEBUG_SOCKET, "close func no impl");
-        return NET_ERR_NONE;
+        return NET_ERR_NOT_SUPPORT;
     }
     net_err_t err = sock->ops->close(sock);
     if (err == NET_ERR_NEED_WAIT)
     {
         if (sock->conn_wait)
         {
-            sock_wait_add(sock->conn_wait, sock->rcv_tmo, req);
+            sock_wait_add(sock->conn_wait, NET_CLOSE_MAX_TMO, req);
         }
     }
     socket_free(s);
     return err;
+}
+
+net_err_t sock_destroy_req_in(struct func_msg_t * msg)
+{
+    sock_req_t * req = (sock_req_t *)msg->param;
+
+    x_socket_t * s = get_socket(req->sockfd);
+    if (!s)
+    {
+        debug_error(DEBUG_SOCKET, "param error");
+        return NET_ERR_PARAM;
+    }
+
+    sock_t * sock = s->sock;
+    if (!sock->ops->destroy)
+    {
+        debug_error(DEBUG_SOCKET, "destroy func no impl");
+        return NET_ERR_NOT_SUPPORT;
+    }
+    sock->ops->destroy(sock);
+    socket_free(s);
+    return NET_ERR_OK;
 }
 
 net_err_t sock_connect_req_in(struct func_msg_t * msg)

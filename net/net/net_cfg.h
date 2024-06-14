@@ -70,4 +70,6 @@
 #define TCP_KEEPALIVE_INTVL     5
 #define TCP_KEEPALIVE_PROBES    10
 
+#define NET_CLOSE_MAX_TMO       5000
+
 #endif //NET_NET_CFG_H

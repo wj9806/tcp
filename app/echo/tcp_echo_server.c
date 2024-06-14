@@ -55,7 +55,7 @@ void tcp_echo_server_start(int port)
             send(client, buf, size, 0);
         }
 
-        close(s);
+        close(client);
     }
 end:
     if (s >= 0)

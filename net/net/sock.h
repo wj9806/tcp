@@ -10,6 +10,7 @@
 #include "ipaddr.h"
 #include "list.h"
 #include "sys_plat.h"
+#include "exmsg.h"
 
 struct sock_t;
 struct x_sockaddr;
@@ -166,5 +167,41 @@ net_err_t sock_send(struct sock_t * s, const void * buf, size_t len, int flags, 
 net_err_t sock_recv(struct sock_t * s, void * buf, size_t len, int flags, ssize_t * result_len);
 
 net_err_t sock_bind(struct sock_t * s, const struct x_sockaddr * addr, x_socklen_t len);
+
+//create socket
+net_err_t sock_create_req_in(struct func_msg_t * msg);
+
+//send data
+net_err_t sock_sendto_req_in(struct func_msg_t * msg);
+
+//send data
+net_err_t sock_send_req_in(struct func_msg_t * msg);
+
+//recv data
+net_err_t sock_recvfrom_req_in(struct func_msg_t * msg);
+
+//recv data
+net_err_t sock_recv_req_in(struct func_msg_t * msg);
+
+//set sockopt
+net_err_t sock_setsockopt_req_in(struct func_msg_t * msg);
+
+//close socket
+net_err_t sock_close_req_in(struct func_msg_t * msg);
+
+//connect socket
+net_err_t sock_connect_req_in(struct func_msg_t * msg);
+
+//bind socket
+net_err_t sock_bind_req_in(struct func_msg_t * msg);
+
+//listen
+net_err_t sock_listen_req_in(struct func_msg_t * msg);
+
+//accept
+net_err_t sock_accept_req_in(struct func_msg_t * msg);
+
+//destroy socket
+net_err_t sock_destroy_req_in(struct func_msg_t * msg);
 
 #endif //NET_SOCK_H

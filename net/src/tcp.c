@@ -20,6 +20,7 @@ void tcp_show_info(char * msg, tcp_t * tcp)
 {
     plat_printf("%s\n", msg);
     plat_printf("   local port: %d, remote port: %d\n", tcp->base.local_port, tcp->base.remote_port);
+    plat_printf("   tcp: %p, state: %s\n", tcp, tcp_state_name(tcp->state));
 }
 
 void tcp_show_pkt(char * msg, tcp_hdr_t * tcp_hdr, pktbuf_t * buf)
@@ -208,7 +209,7 @@ static void tcp_free(tcp_t * tcp)
 static net_err_t tcp_close (struct sock_t * s)
 {
     tcp_t * tcp = (tcp_t*)s;
-    debug_info(DEBUG_TCP, "closing tcp: state = %s", tcp_state_name(tcp->state));
+    debug_info(DEBUG_TCP, "closing tcp %p: state = %s", tcp, tcp_state_name(tcp->state));
     switch (tcp->state) {
         case TCP_STATE_CLOSED:
             debug_info(DEBUG_TCP, "tcp already closed");
@@ -488,6 +489,18 @@ static net_err_t tcp_accept(struct sock_t * s, struct x_sockaddr * addr, x_sockl
     return NET_ERR_NEED_WAIT;
 }
 
+static void tcp_destroy(struct sock_t * s)
+{
+    tcp_t * tcp = (tcp_t *)s;
+
+    if (tcp->state == TCP_STATE_TIME_WAIT)
+    {
+        return;
+    }
+
+    tcp_free(tcp);
+}
+
 static tcp_t * tcp_alloc(int wait, int family, int protocol)
 {
     //tcp function table
@@ -500,6 +513,7 @@ static tcp_t * tcp_alloc(int wait, int family, int protocol)
             .bind = tcp_bind,
             .listen = tcp_listen,
             .accept = tcp_accept,
+            .destroy = tcp_destroy,
     };
 
     tcp_t * tcp = tcp_get_free(wait);
