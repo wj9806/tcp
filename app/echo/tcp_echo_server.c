@@ -54,7 +54,7 @@ void tcp_echo_server_start(int port)
             plat_printf("recv size : %ld\n", size);
             send(client, buf, size, 0);
         }
-
+        recv(client, buf, sizeof(buf), 0);
         close(client);
     }
 end:

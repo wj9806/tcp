@@ -233,4 +233,9 @@ int tcp_backlog_count(tcp_t * tcp);
  */
 tcp_t * tcp_create_child(tcp_t* tcp, tcp_seg_t * seg);
 
+/**
+ * free tcp
+ */
+void tcp_free(tcp_t * tcp);
+
 #endif //NET_TCP_H

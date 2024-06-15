@@ -189,9 +189,22 @@ net_err_t tcp_established_in(tcp_t * tcp, tcp_seg_t * seg)
     return NET_ERR_OK;
 }
 
+static void tcp_timewait_tmo(struct net_timer_t * timer, void * arg)
+{
+    tcp_t * tcp = (tcp_t *)arg;
+    debug_info(DEBUG_TCP, "tcp %p, free: 2MSL", tcp);
+    tcp_show_info("tcp_timewait_tmo", tcp);
+    tcp_free(tcp);
+}
+
 static void tcp_time_wait(tcp_t * tcp)
 {
     tcp_set_state(tcp, TCP_STATE_TIME_WAIT);
+
+    tcp_kill_all_timers(tcp);
+    net_timer_add(&tcp->conn.keep_timer, "2msl timer", tcp_timewait_tmo, tcp, 2 * TCP_TMO_MSL, 0);
+
+    sock_wakeup(&tcp->base, SOCK_WAIT_ALL, NET_ERR_CLOSE);
 }
 
 net_err_t tcp_fin_wait_1_in(tcp_t * tcp, tcp_seg_t * seg)

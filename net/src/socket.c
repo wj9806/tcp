@@ -184,6 +184,10 @@ ssize_t x_recv(int s, const void * buf, size_t len, int flags)
         req.data.flags = flags;
         req.data.comp_len = 0;
         net_err_t err = exmsg_func_exec(sock_recv_req_in, &req);
+        if (err == NET_ERR_CLOSE)
+        {
+            return 0;
+        }
         if (err < 0)
         {
             debug_info(DEBUG_SOCKET, "recv socket failed");

@@ -77,8 +77,16 @@ static tcp_t * tcp_get_free(int wait)
     tcp_t * tcp = mblock_alloc(&tcp_mblock, wait ? 0 : -1);
     if (!tcp)
     {
-        debug_error(DEBUG_TCP, "no tcp sock");
-        return (tcp_t *)0;
+        node_t * node;
+        list_for_each(node, &tcp_list)
+        {
+            tcp_t * s = (tcp_t *) list_node_parent(node, sock_t, node);
+            if(s->state == TCP_STATE_TIME_WAIT)
+            {
+                tcp_free(s);
+                return (tcp_t *) mblock_alloc(&tcp_mblock, -1);
+            }
+        }
     }
     return tcp;
 }
@@ -196,7 +204,7 @@ static net_err_t tcp_connect(struct sock_t * s, const struct x_sockaddr * addr, 
     return NET_ERR_NEED_WAIT;
 }
 
-static void tcp_free(tcp_t * tcp)
+void tcp_free(tcp_t * tcp)
 {
     sock_wait_destroy(&tcp->conn.wait);
     sock_wait_destroy(&tcp->rcv.wait);
@@ -206,6 +214,19 @@ static void tcp_free(tcp_t * tcp)
     mblock_free(&tcp_mblock, tcp);
 }
 
+void tcp_clear_parent(tcp_t * tcp)
+{
+    node_t * node;
+    list_for_each(node, &tcp_list)
+    {
+        tcp_t * child = (tcp_t *) list_node_parent(node, sock_t, node);
+        if (child->parent == tcp)
+        {
+            child->parent = (tcp_t *)0;
+        }
+    }
+}
+
 static net_err_t tcp_close (struct sock_t * s)
 {
     tcp_t * tcp = (tcp_t*)s;
@@ -213,6 +234,11 @@ static net_err_t tcp_close (struct sock_t * s)
     switch (tcp->state) {
         case TCP_STATE_CLOSED:
             debug_info(DEBUG_TCP, "tcp already closed");
+            tcp_free(tcp);
+            return NET_ERR_OK;
+        case TCP_STATE_LISTEN:
+            tcp_clear_parent(tcp);
+            tcp_abort(tcp, NET_ERR_CLOSE);
             tcp_free(tcp);
             return NET_ERR_OK;
         case TCP_STATE_SYN_SENT:
@@ -285,6 +311,10 @@ static net_err_t tcp_recv(struct sock_t * s, void * buf, size_t len, int flags, 
             return NET_ERR_CLOSE;
         case TCP_STATE_CLOSE_WAIT:
         case TCP_STATE_CLOSING:
+            if (tcp_buf_cnt(&tcp->rcv.buf) == 0)
+            {
+                return NET_ERR_CLOSE;
+            }
             need_wait = NET_ERR_OK;
             break;
         case TCP_STATE_FIN_WAIT_1:

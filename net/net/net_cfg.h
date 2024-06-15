@@ -71,5 +71,6 @@
 #define TCP_KEEPALIVE_PROBES    10
 
 #define NET_CLOSE_MAX_TMO       5000
+#define TCP_TMO_MSL             5000
 
 #endif //NET_NET_CFG_H
