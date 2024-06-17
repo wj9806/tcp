@@ -4,6 +4,7 @@
 
 #include "socket.h"
 #include "exmsg.h"
+#include "dns.h"
 
 int x_socket(int family, int type, int protocol)
 {
@@ -397,5 +398,71 @@ int x_accept(int s, struct x_sockaddr * addr, x_socklen_t * len)
 int x_gethostbyname_r(const char * name, struct x_hostent * ret, char * buf,
                       size_t len, struct x_hostent ** result, int * err)
 {
+    int internal_err;
+    if (!err)
+    {
+        err = &internal_err;
+    }
+
+    if (!name || !ret || !buf || !len || !result)
+    {
+        debug_error(DEBUG_SOCKET, "invalid param");
+        *err = NET_ERR_PARAM;
+        return -1;
+    }
+
+    size_t name_len = plat_strlen(name);
+    if (len < (sizeof(hostent_extra_t) + name_len))
+    {
+        debug_error(DEBUG_SOCKET, "buf too small");
+        *err = NET_ERR_PARAM;
+        return -1;
+    }
+
+    dns_req_t * dns_req = dns_alloc_req();
+    plat_strncpy(dns_req->domain_name, name, DNS_DOMAIN_MAX);
+    ipaddr_set_any(&dns_req->ipaddr);
+    dns_req->err = NET_ERR_OK;
+    dns_req->wait_sem = SYS_SEM_INVALID;
+    net_err_t e = exmsg_func_exec(dns_req_in, dns_req);
+    if (e < 0)
+    {
+        debug_error(DEBUG_SOCKET, "get host ip failed");
+        *err = e;
+        goto dns_req_error;
+    }
+    if ((dns_req->wait_sem != SYS_SEM_INVALID) && sys_sem_wait(dns_req->wait_sem, 0) < 0)
+    {
+        debug_error(DEBUG_SOCKET, "sem wait failed");
+        *err = e;
+        goto dns_req_error;
+    }
+
+    if (dns_req->err < 0)
+    {
+        debug_error(DEBUG_SOCKET, "dns resolve failed");
+        *err = dns_req->err;
+        goto dns_req_error;
+    }
+
+    hostent_extra_t * extra = (hostent_extra_t*)buf;
+    extra->addr = dns_req->ipaddr.q_addr;
+
+    plat_strncpy(extra->name, name, name_len);
+    ret->h_name = extra->name;
+    ret->h_aliases = (char *)0;
+    ret->h_addrtype = AF_INET;
+    ret->h_length = 4;
+    ret->h_addr_list = (char **)extra->addr_tbl;
+    ret->h_addr_list[0] = (char *)&extra->addr;
+    ret->h_addr_list[1] = (char *)0;
+
+    *result = ret;
+    *err = NET_ERR_OK;
+    dns_free_req(dns_req);
     return 0;
+
+    dns_req_error:
+    dns_free_req(dns_req);
+    return -1;
 }

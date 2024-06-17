@@ -48,6 +48,8 @@
 #undef TCP_KEEPCNT
 #define TCP_KEEPCNT      6
 
+typedef uint32_t x_in_addr_t;
+
 struct x_timeval {
     long    tv_sec;
     long    tv_usec;
@@ -88,6 +90,12 @@ struct  x_hostent {
     short   h_length;           /* length of address */
     char    ** h_addr_list;     /* list of addresses */
 };
+
+typedef struct {
+    x_in_addr_t * addr_tbl[2];
+    x_in_addr_t addr;
+    char name[1];
+} hostent_extra_t;
 
 /**
  *
