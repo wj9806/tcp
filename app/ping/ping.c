@@ -36,6 +36,15 @@ void ping_run(ping_t * ping, const char * dest, int count, int size, int interva
 {
     static uint16_t start_id = PING_DEFAULT_ID;
 
+    struct hostent hent, * result;
+    char buf[512];
+    int err;
+   if(gethostbyname_r(dest, &hent, buf, sizeof(buf), &result, &err) < 0)
+   {
+       plat_printf("resolve name %s failed\n", dest);
+       return;
+   }
+
     int s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     if (s < 0)
     {
@@ -72,7 +81,7 @@ void ping_run(ping_t * ping, const char * dest, int count, int size, int interva
         int size = send(s, (const char *)&ping->req, total_size, 0);
         if (size < 0)
         {
-            printf("send ping request failed\n");
+            plat_printf("send ping request failed\n");
             break;
         }
         clock_t time = clock();
@@ -85,7 +94,7 @@ void ping_run(ping_t * ping, const char * dest, int count, int size, int interva
             size = recv(s, (char *)&ping->reply, sizeof(ping->reply), 0);
             if (size < 0)
             {
-                printf("recv ping timeout\n");
+                plat_printf("recv ping timeout\n");
                 break;
             }
 
@@ -99,7 +108,7 @@ void ping_run(ping_t * ping, const char * dest, int count, int size, int interva
             int recv_size = size - sizeof(ip_hdr_t) - sizeof(icmp_hdr_t);
             if (memcmp(ping->req.buf, ping->reply.buf, recv_size))
             {
-                printf("recv data error\n");
+                plat_printf("recv data error\n");
                 continue;
             }
 
@@ -109,19 +118,19 @@ void ping_run(ping_t * ping, const char * dest, int count, int size, int interva
             int send_size = fill_size;
             if (recv_size == send_size)
             {
-                printf("reply from %s: bytes=%d", inet_ntoa(addr.sin_addr), send_size);
+                plat_printf("reply from %s: bytes=%d", inet_ntoa(addr.sin_addr), send_size);
             }
             else
             {
-                printf("reply from %s: bytes=%d(send=%d)", inet_ntoa(addr.sin_addr), recv_size, send_size);
+                plat_printf("reply from %s: bytes=%d(send=%d)", inet_ntoa(addr.sin_addr), recv_size, send_size);
             }
 
             if (diff_ms < 1)
             {
-                printf(", time < 1ms, TTL=%d\n", ip_hdr->ttl);
+                plat_printf(", time < 1ms, TTL=%d\n", ip_hdr->ttl);
             }
             else{
-                printf(", time = %dms, TTL=%d\n", diff_ms, ip_hdr->ttl);
+                plat_printf(", time = %dms, TTL=%d\n", diff_ms, ip_hdr->ttl);
             }
 
         }

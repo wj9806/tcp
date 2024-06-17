@@ -44,6 +44,8 @@
 #undef ntohl
 #define ntohl(v)          x_ntohl(v)
 
+#define hostent           x_hostent
+
 /**
  * convert addr to string
  */
@@ -65,5 +67,7 @@ const char * x_inet_ntop(int family, const void * addrptr, char * strptr, size_t
 #define inet_addr(str)                              x_inet_addr(str)
 #define inet_pton(family, strptr, addrptr)          x_inet_pton(family, strptr, addrptr)
 #define inet_ntop(family, addrptr, strptr, len)     x_inet_ntop(family, addrptr, strptr, len)
+
+#define gethostbyname_r(dest, ret, buf, len, result, err)   x_gethostbyname_r(dest, ret, buf, len, result, err)
 
 #endif //NET_NET_API_H

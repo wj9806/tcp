@@ -279,15 +279,16 @@ int main()
     //udp_echo_server_start(2000);
     //tcp_echo_client_start(friend0_ip, 2000);
 
-    tcp_echo_server_start(2000);
+    //tcp_echo_server_start(2000);
     //download_test("hello.txt", 2000);
 
-    int arg = 0x12345;
-    net_err_t err = exmsg_func_exec(test_func, &arg);
+    //int arg = 0x12345;
+    //net_err_t err = exmsg_func_exec(test_func, &arg);
 
     ping_t ping;
+    ping_run(&ping, "8.8.8.8", 1, 64, 1000);
+    ping_run(&ping, "baidu.com", 1, 64, 1000);
     //ping_run(&ping, "223.5.5.5", 4, 64, 1000);
-    ping_run(&ping, friend0_ip, 1, 64, 1000);
     //ping_run(&ping, "223.5.5.5", 1, 64, 1000);
 
     char cmd[32], param[32];

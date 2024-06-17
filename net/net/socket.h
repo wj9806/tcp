@@ -81,6 +81,14 @@ struct x_sockaddr_in {
     char sin_zero[8];
 };
 
+struct  x_hostent {
+    char    * h_name;           /* official name of host */
+    char    * h_aliases;        /* alias list */
+    short   h_addrtype;         /* host address type */
+    short   h_length;           /* length of address */
+    char    ** h_addr_list;     /* list of addresses */
+};
+
 /**
  *
  * @param family protocol family
@@ -123,10 +131,25 @@ int x_close(int s);
  */
 int x_connect(int s, const struct x_sockaddr * addr, x_socklen_t len);
 
+/**
+ * bind
+ */
 int x_bind(int s, const struct x_sockaddr * addr, x_socklen_t addr_len);
 
+/**
+ * listen
+ */
 int x_listen(int s, int backlog);
 
+/**
+ * accept
+ */
 int x_accept(int s, struct x_sockaddr * addr, x_socklen_t * len);
+
+/**
+ * gethostbyname
+ */
+int x_gethostbyname_r(const char * name, struct x_hostent * ret, char * buf,
+        size_t len, struct x_hostent ** result, int * err);
 
 #endif //NET_SOCKET_H
