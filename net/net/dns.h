@@ -10,6 +10,11 @@
 #include "exmsg.h"
 
 typedef struct {
+    ipaddr_t ipaddr;
+    char domain_name[DNS_DOMAIN_MAX];
+} dns_entry_t;
+
+typedef struct {
     char domain_name[DNS_DOMAIN_MAX];
     net_err_t err;
     ipaddr_t ipaddr;
