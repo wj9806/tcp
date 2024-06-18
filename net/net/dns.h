@@ -17,6 +17,11 @@ typedef struct {
 } dns_req_t;
 
 /**
+ * init dns module
+ */
+void dns_init(void);
+
+/**
  * alloc dns req struct
  */
 dns_req_t * dns_alloc_req(void);

@@ -24,6 +24,7 @@
 #define DEBUG_RAW               DEBUG_LEVEL_ERROR
 #define DEBUG_UDP               DEBUG_LEVEL_ERROR
 #define DEBUG_TCP               DEBUG_LEVEL_INFO
+#define DEBUG_DNS               DEBUG_LEVEL_INFO
 
 
 #define EXMSG_MSG_CNT           10
@@ -74,5 +75,6 @@
 #define TCP_TMO_MSL             5000
 
 #define DNS_DOMAIN_MAX          32
+#define DNS_REQ_SIZE            10
 
 #endif //NET_NET_CFG_H

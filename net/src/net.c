@@ -14,6 +14,7 @@
 #include "raw.h"
 #include "udp.h"
 #include "tcp.h"
+#include "dns.h"
 
 net_err_t net_init(void)
 {
@@ -32,6 +33,7 @@ net_err_t net_init(void)
     raw_init();
     udp_init();
     tcp_init();
+    dns_init();
     loop_init();
     return NET_ERR_OK;
 }
