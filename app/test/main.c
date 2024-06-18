@@ -286,6 +286,7 @@ int main()
     //net_err_t err = exmsg_func_exec(test_func, &arg);
 
     ping_t ping;
+    ping_run(&ping, "localhost", 1, 64, 1000);
     ping_run(&ping, "8.8.8.8", 1, 64, 1000);
     ping_run(&ping, "baidu.com", 1, 64, 1000);
     //ping_run(&ping, "223.5.5.5", 4, 64, 1000);

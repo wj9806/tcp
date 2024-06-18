@@ -39,11 +39,11 @@ void ping_run(ping_t * ping, const char * dest, int count, int size, int interva
     struct hostent hent, * result;
     char buf[512];
     int err;
-   if(gethostbyname_r(dest, &hent, buf, sizeof(buf), &result, &err) < 0)
-   {
+    if(gethostbyname_r(dest, &hent, buf, sizeof(buf), &result, &err) < 0)
+    {
        plat_printf("resolve name %s failed\n", dest);
        return;
-   }
+    }
 
     int s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     if (s < 0)
@@ -60,7 +60,8 @@ void ping_run(ping_t * ping, const char * dest, int count, int size, int interva
     struct sockaddr_in addr;
     plat_memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = inet_addr(dest);
+    //addr.sin_addr.s_addr = inet_addr(dest);
+    addr.sin_addr.s_addr = *(uint32_t*)hent.h_addr_list[0];
     addr.sin_port = 0;
 
     connect(s, (const struct sockaddr *)&addr, sizeof(addr));
