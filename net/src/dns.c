@@ -6,16 +6,26 @@
 #include "mblock.h"
 #include "list.h"
 #include "debug.h"
+#include "tools.h"
+#include "udp.h"
+#include "net_api.h"
+#include "socket.h"
 
 static list_t req_list;
 static mblock_t req_block;
 static dns_req_t dns_req_tbl[DNS_REQ_SIZE];
+static udp_t * dns_udp;
+
+static char working_buf[DNS_WORKING_BUF_SIZE];
 
 void dns_init(void)
 {
     debug_info(DEBUG_DNS, "dns init");
     list_init(&req_list);
     mblock_init(&req_block, dns_req_tbl, sizeof(dns_req_t), DNS_REQ_SIZE, LOCKER_THREAD);
+
+    dns_udp = (udp_t *) udp_create(AF_INET, IPPROTO_UDP);
+    assert(dns_udp != (udp_t *)0, "dns_udp create failed")
 }
 
 dns_req_t * dns_alloc_req(void)
@@ -39,8 +49,70 @@ static void dns_req_add(dns_req_t * req)
 
 }
 
+static uint8_t * ip_add_query_find(char * domain_name, uint8_t * buf, size_t size)
+{
+    if (size < plat_strlen(domain_name) + 2 + 4)
+    {
+        debug_error(DEBUG_DNS, "no buf");
+        return (uint8_t *)0;
+    }
+
+    char * name_buf = buf;
+    name_buf[0] = '.';
+    plat_strcpy(name_buf + 1, domain_name);
+
+    char * c = name_buf;
+    while (*c)
+    {
+        if (*c == '.')
+        {
+            char * dot = c++;
+            while (*c && (*c != '.'))
+            {
+                c++;
+            }
+            *dot = (uint8_t)(c - dot - 1);
+        }
+        else
+        {
+            c++;
+        }
+    }
+    *c++ = '\0';
+
+    dns_qfield_t * f = (dns_qfield_t*)c;
+    f->class = x_htons(DNS_QUERY_CLASS_INET);
+    f->type = x_htons(DNS_QUERY_TYPE_A);
+
+    return (uint8_t*) f + sizeof(dns_qfield_t);
+}
+
 static net_err_t dns_send_query(dns_req_t *req) {
-    return NET_ERR_OK;
+    dns_hdr_t * dns_hdr = (dns_hdr_t *) working_buf;
+    dns_hdr->id = x_htons(0);
+    dns_hdr->flags.all = 0;
+    dns_hdr->flags.qr = 0;
+    dns_hdr->flags.rd = 1;
+    dns_hdr->flags.all = x_htons(dns_hdr->flags.all);
+    dns_hdr->qdcount = x_htons(1);
+    dns_hdr->ancount = 0;
+    dns_hdr->nscount = 0;
+    dns_hdr->arcount = 0;
+
+    uint8_t * buf = working_buf + sizeof(dns_hdr_t);
+    buf = ip_add_query_find(req->domain_name, buf, sizeof(working_buf) - ((char *)buf - working_buf));
+    if(!buf) {
+        debug_error(DEBUG_DNS, "add query failed");
+        return NET_ERR_MEM;
+    }
+
+    struct x_sockaddr_in dest;
+    plat_memset(&dest,0, sizeof(dest));
+    dest.sin_family = AF_INET;
+    dest.sin_port = x_htons(DNS_PORT);
+    dest.sin_addr.s_addr = x_inet_addr("192.168.0.1");
+    return udp_sendto((sock_t *) dns_udp, working_buf, (char *)buf - working_buf, 0,
+                      (const struct x_sockaddr *)&dest,sizeof(dest), (ssize_t*)0);
 }
 
 net_err_t dns_req_in(func_msg_t * msg)

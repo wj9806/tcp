@@ -104,7 +104,7 @@ static net_err_t alloc_port(sock_t * sock)
     return NET_ERR_NONE;
 }
 
-static net_err_t udp_sendto(struct sock_t * s, const void * buf, size_t len, int flags,
+net_err_t udp_sendto(struct sock_t * s, const void * buf, size_t len, int flags,
                             const struct x_sockaddr * dest, x_socklen_t dest_len, ssize_t * result_len)
 {
     ipaddr_t dest_ip;
@@ -148,8 +148,10 @@ static net_err_t udp_sendto(struct sock_t * s, const void * buf, size_t len, int
         debug_error(DEBUG_UDP, "send error");
         goto end_send_to;
     }
-
-    *result_len = (ssize_t)len;
+    if (result_len)
+    {
+        *result_len = (ssize_t)len;
+    }
     return NET_ERR_OK;
     end_send_to:
     pktbuf_free(pkt_buf);

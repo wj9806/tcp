@@ -9,6 +9,53 @@
 #include "sys_plat.h"
 #include "exmsg.h"
 
+#define DNS_QUERY_CLASS_INET        1
+#define DNS_QUERY_TYPE_A            1
+
+#pragma pack(1)
+typedef struct {
+    uint16_t id;
+    union {
+        uint16_t all;
+        struct {
+#if NET_ENDIAN_LITTLE
+            uint16_t rcode : 4;
+            uint16_t cd : 1;
+            uint16_t ad : 1;
+            uint16_t z : 1;
+            uint16_t ra : 1;
+            uint16_t rd : 1;
+            uint16_t tc : 1;
+            uint16_t aa : 1;
+            uint16_t opcode : 4;
+            uint16_t qr : 1;
+#else
+            uint16_t qr : 1;
+            uint16_t opcode : 4;
+            uint16_t aa : 1;
+            uint16_t tc : 1;
+            uint16_t rd : 1;
+            uint16_t ra : 1;
+            uint16_t z : 1;
+            uint16_t ad : 1;
+            uint16_t cd : 1;
+            uint16_t rcode : 4;
+#endif
+        };
+    } flags;
+
+    uint16_t qdcount;
+    uint16_t ancount;
+    uint16_t nscount;
+    uint16_t arcount;
+} dns_hdr_t;
+
+typedef struct {
+    uint16_t type;
+    uint16_t class;
+} dns_qfield_t;
+#pragma pack()
+
 typedef struct {
     ipaddr_t ipaddr;
     char domain_name[DNS_DOMAIN_MAX];
