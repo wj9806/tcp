@@ -431,7 +431,7 @@ int x_gethostbyname_r(const char * name, struct x_hostent * ret, char * buf,
         *err = e;
         goto dns_req_error;
     }
-    if ((dns_req->wait_sem != SYS_SEM_INVALID) && sys_sem_wait(dns_req->wait_sem, 0) < 0)
+    if ((dns_req->wait_sem != SYS_SEM_INVALID) && sys_sem_wait(dns_req->wait_sem, DNS_REQ_TMO) < 0)
     {
         debug_error(DEBUG_SOCKET, "sem wait failed");
         *err = e;

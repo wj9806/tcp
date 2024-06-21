@@ -77,5 +77,6 @@
 #define DNS_DOMAIN_MAX          32
 #define DNS_REQ_SIZE            10
 #define DNS_WORKING_BUF_SIZE    512
+#define DNS_REQ_TMO             5000
 
 #endif //NET_NET_CFG_H

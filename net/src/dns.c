@@ -18,6 +18,20 @@ static uint16_t id;
 
 static char working_buf[DNS_WORKING_BUF_SIZE];
 
+#if DEBUG_DISP_ENABLED(DEBUG_DNS)
+static void show_req_list (void) {
+    plat_printf("dns req list----------\n");
+    node_t * node;
+    list_for_each(node, &req_list) {
+        dns_req_t * req = list_node_parent(node, dns_req_t, node);
+
+        plat_printf("name(%s), id: %d\n", req->domain_name, req->query_id);
+    }
+}
+#else
+#define show_req_list()
+#endif
+
 void dns_init(void)
 {
     debug_info(DEBUG_DNS, "dns init");
@@ -35,6 +49,11 @@ dns_req_t * dns_alloc_req(void)
 
 void dns_free_req(dns_req_t * req)
 {
+    if (req->wait_sem != SYS_SEM_INVALID)
+    {
+        sys_sem_free(req->wait_sem);
+        req->wait_sem = SYS_SEM_INVALID;
+    }
     mblock_free(&req_block, req);
 }
 
@@ -48,8 +67,12 @@ static void dns_req_add(dns_req_t * req)
     req->query_id = ++id;
     req->err = NET_ERR_OK;
     ipaddr_set_any(&req->ipaddr);
-
     list_insert_last(&req_list, &req->node);
+
+    if (list_count(&req_list))
+    {
+        show_req_list();
+    }
 }
 
 static uint8_t * ip_add_query_find(char * domain_name, uint8_t * buf, size_t size)
@@ -231,6 +254,28 @@ static const uint8_t * domain_name_skip(const uint8_t* name, size_t size)
     return c;
 }
 
+static void dns_req_remove(dns_req_t * req, net_err_t err)
+{
+    list_remove(&req_list, &req->node);
+
+    req->err = err;
+    if (req->err < 0)
+    {
+        ipaddr_set_any(&req->ipaddr);
+    }
+
+    sys_sem_notify(req->wait_sem);
+    sys_sem_free(req->wait_sem);
+    req->wait_sem = SYS_SEM_INVALID;
+
+    show_req_list();
+}
+
+static void dns_req_fail(dns_req_t* req, net_err_t err)
+{
+    dns_req_remove(req, err);
+}
+
 void dns_in()
 {
     ssize_t rcv_len;
@@ -360,12 +405,15 @@ void dns_in()
                 && (af->rd_len == x_ntohs(IPV4_ADDR_SIZE)))
             {
                 ipaddr_from_buf(&req->ipaddr, (const uint8_t*)af->rdata);
-                //#todo
+
+                dns_req_remove(req, NET_ERR_OK);
                 return;
             }
+            rcv_start += sizeof(dns_afield_t) + x_ntohs(af->rd_len) - 1;
         }
+        req_failed:
+        dns_req_fail(req, err);
+        return;
     }
-    req_failed:
-    return;
 }
 
