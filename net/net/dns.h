@@ -9,9 +9,17 @@
 #include "sys_plat.h"
 #include "exmsg.h"
 #include "udp.h"
+#include "list.h"
 
 #define DNS_QUERY_CLASS_INET        1
 #define DNS_QUERY_TYPE_A            1
+
+#define DNS_ERR_NONE            0
+#define DNS_ERR_FORMAT  	    1
+#define DNS_ERR_SERV_FAIL	    2
+#define DNS_ERR_NXMOMAIN		3
+#define DNS_ERR_NOTIMP  	    4
+#define DNS_ERR_REFUSED		    5
 
 #pragma pack(1)
 typedef struct {
@@ -67,6 +75,9 @@ typedef struct {
     net_err_t err;
     ipaddr_t ipaddr;
     sys_sem_t wait_sem;
+
+    int query_id;
+    node_t node;
 } dns_req_t;
 
 /**
