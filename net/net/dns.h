@@ -78,6 +78,7 @@ typedef struct {
 typedef struct {
     ipaddr_t ipaddr;
     char domain_name[DNS_DOMAIN_MAX];
+    int ttl;
 } dns_entry_t;
 
 typedef struct {

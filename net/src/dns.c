@@ -10,6 +10,8 @@
 #include "net_api.h"
 #include "socket.h"
 
+static dns_entry_t dns_entry_tbl[DNS_ENTRY_SIZE];
+
 static list_t req_list;
 static mblock_t req_block;
 static dns_req_t dns_req_tbl[DNS_REQ_SIZE];
@@ -28,13 +30,31 @@ static void show_req_list (void) {
         plat_printf("name(%s), id: %d\n", req->domain_name, req->query_id);
     }
 }
+
+static void show_entry_list(void)
+{
+    for (int i = 0; i < DNS_ENTRY_SIZE; ++i) {
+        dns_entry_t * entry = dns_entry_tbl + i;
+
+        if (ipaddr_is_any(&entry->ipaddr))
+        {
+            continue;
+        }
+
+        plat_printf("%s ttl(%d)", entry->domain_name, entry->ttl);
+        debug_dump_ip("ip:", &entry->ipaddr);
+    }
+}
 #else
 #define show_req_list()
+#define show_entry_list()
 #endif
 
 void dns_init(void)
 {
     debug_info(DEBUG_DNS, "dns init");
+    plat_memset(dns_entry_tbl, 0, sizeof(dns_entry_t));
+
     list_init(&req_list);
     mblock_init(&req_block, dns_req_tbl, sizeof(dns_req_t), DNS_REQ_SIZE, LOCKER_THREAD);
 
@@ -57,8 +77,54 @@ void dns_free_req(dns_req_t * req)
     mblock_free(&req_block, req);
 }
 
+static void dns_entry_init(dns_entry_t * entry, const char * domain_name, int ttl, ipaddr_t * ipaddr)
+{
+    ipaddr_copy(&entry->ipaddr, ipaddr);
+    entry->ttl = ttl;
+    plat_strncpy(entry->domain_name, domain_name, DNS_DOMAIN_MAX - 1);
+    entry->domain_name[DNS_DOMAIN_MAX - 1] = '\0';
+}
+
+static void dns_entry_free(dns_entry_t * entry)
+{
+    ipaddr_set_any(&entry->ipaddr);
+}
+
+static void dns_entry_insert(const char * domain_name, uint32_t ttl, ipaddr_t * ipaddr)
+{
+    dns_entry_t * next = (dns_entry_t *) 0;
+    dns_entry_t * oldest = (dns_entry_t *)0;
+
+    for (int i = 0; i < DNS_ENTRY_SIZE; ++i) {
+        dns_entry_t * entry = dns_entry_tbl + i;
+        if (ipaddr_is_any(&entry->ipaddr))
+        {
+            next = entry;
+            break;
+        }
+
+        if((oldest == (dns_entry_t *)0) || (entry->ttl < oldest->ttl))
+        {
+            oldest = entry;
+        }
+    }
+
+    next = next ? next : oldest;
+    dns_entry_init(next, domain_name, ttl, ipaddr);
+}
+
 static dns_entry_t * dns_entry_find(const char * domain_name)
 {
+    for (int i = 0; i < DNS_ENTRY_SIZE; ++i) {
+        dns_entry_t * curr = dns_entry_tbl + i;
+        if(!ipaddr_is_any(&curr->ipaddr))
+        {
+            if(plat_stricmp(domain_name, curr->domain_name) == 0)
+            {
+                return curr;
+            }
+        }
+    }
     return (dns_entry_t *) 0;
 }
 
@@ -405,7 +471,7 @@ void dns_in()
                 && (af->rd_len == x_ntohs(IPV4_ADDR_SIZE)))
             {
                 ipaddr_from_buf(&req->ipaddr, (const uint8_t*)af->rdata);
-
+                dns_entry_insert(req->domain_name, x_ntohl(af->ttl), &req->ipaddr);
                 dns_req_remove(req, NET_ERR_OK);
                 return;
             }
