@@ -7,7 +7,6 @@
 #include "list.h"
 #include "debug.h"
 #include "tools.h"
-#include "udp.h"
 #include "net_api.h"
 #include "socket.h"
 
@@ -115,6 +114,11 @@ static net_err_t dns_send_query(dns_req_t *req) {
                       (const struct x_sockaddr *)&dest,sizeof(dest), (ssize_t*)0);
 }
 
+int dns_is_arrive(udp_t * udp)
+{
+    return udp == dns_udp;
+}
+
 net_err_t dns_req_in(func_msg_t * msg)
 {
     dns_req_t * dns_req = (dns_req_t*) msg->param;
@@ -164,5 +168,30 @@ net_err_t dns_req_in(func_msg_t * msg)
         dns_req->wait_sem = SYS_SEM_INVALID;
     }
     return err;
+}
+
+void dns_in()
+{
+    ssize_t rcv_len;
+    struct x_sockaddr_in src;
+    x_socklen_t addr_len;
+    net_err_t err = udp_recvfrom((sock_t *)dns_udp, working_buf, sizeof(working_buf), 0,
+                                 (struct x_sockaddr*) &src, &addr_len, &rcv_len);
+    if (err < 0)
+    {
+        debug_error(DEBUG_DNS, "rcv udp failed");
+        return;
+    }
+
+    const uint8_t * rcv_start = (uint8_t *) working_buf;
+    const uint8_t * rcv_end = (uint8_t *) working_buf + rcv_len;
+
+    dns_hdr_t * dns_hdr = (dns_hdr_t *)rcv_start;
+    dns_hdr->id = x_ntohs(dns_hdr->id);
+    dns_hdr->flags.all = x_ntohs(dns_hdr->flags.all);
+    dns_hdr->qdcount = x_ntohs(dns_hdr->qdcount);
+    dns_hdr->ancount = x_ntohs(dns_hdr->ancount);
+    dns_hdr->nscount = x_ntohs(dns_hdr->nscount);
+    dns_hdr->arcount = x_ntohs(dns_hdr->arcount);
 }
 

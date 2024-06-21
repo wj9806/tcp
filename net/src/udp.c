@@ -9,6 +9,7 @@
 #include "net_api.h"
 #include "protocol.h"
 #include "ipv4.h"
+#include "dns.h"
 
 static udp_t udp_tbl[UDP_MAX_NR];
 static mblock_t udp_mblock;
@@ -158,7 +159,7 @@ net_err_t udp_sendto(struct sock_t * s, const void * buf, size_t len, int flags,
     return err;
 }
 
-static net_err_t udp_recvfrom(struct sock_t * s, void * buf, size_t len, int flags,
+net_err_t udp_recvfrom(struct sock_t * s, void * buf, size_t len, int flags,
                               const struct x_sockaddr * src, x_socklen_t * src_len, ssize_t * result_len)
 {
     udp_t * udp = (udp_t*)s;
@@ -166,7 +167,10 @@ static net_err_t udp_recvfrom(struct sock_t * s, void * buf, size_t len, int fla
     node_t * first = list_remove_first(&udp->recv_list);
     if (!first)
     {
-        *result_len = 0;
+        if (result_len)
+        {
+            *result_len = 0;
+        }
         return NET_ERR_NEED_WAIT;
     }
     pktbuf_t * pktbuf = list_node_parent(first, pktbuf_t, node);
@@ -190,7 +194,10 @@ static net_err_t udp_recvfrom(struct sock_t * s, void * buf, size_t len, int fla
     }
 
     pktbuf_free(pktbuf);
-    *result_len = size;
+    if (result_len)
+    {
+        *result_len = size;
+    }
     return NET_ERR_OK;
 }
 
@@ -424,7 +431,13 @@ net_err_t udp_in(pktbuf_t * buf, ipaddr_t * src_ip, ipaddr_t * dest_ip)
     if (list_count(&udp->recv_list) < UDP_MAX_RECV)
     {
         list_insert_last(&udp->recv_list, &buf->node);
-        sock_wakeup((sock_t *)udp, SOCK_WAIT_READ, NET_ERR_OK);
+        if (dns_is_arrive(udp))
+        {
+            dns_in();
+        }
+        else {
+            sock_wakeup((sock_t *) udp, SOCK_WAIT_READ, NET_ERR_OK);
+        }
     }
     else
     {

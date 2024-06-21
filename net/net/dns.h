@@ -8,6 +8,7 @@
 #include "net_cfg.h"
 #include "sys_plat.h"
 #include "exmsg.h"
+#include "udp.h"
 
 #define DNS_QUERY_CLASS_INET        1
 #define DNS_QUERY_TYPE_A            1
@@ -87,5 +88,15 @@ void dns_free_req(dns_req_t * req);
  * handle dns req
  */
 net_err_t dns_req_in(func_msg_t * msg);
+
+/**
+ * is dns?
+ */
+int dns_is_arrive(udp_t * udp);
+
+/**
+ * input dns data packet
+ */
+void dns_in();
 
 #endif //NET_DNS_H

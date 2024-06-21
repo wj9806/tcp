@@ -58,9 +58,15 @@ net_err_t udp_out(ipaddr_t * dest, uint16_t dport, ipaddr_t * src, uint16_t spor
 net_err_t udp_in(pktbuf_t * buf, ipaddr_t * src_ip, ipaddr_t * dest_ip);
 
 /**
- * send udp packet to given dest
+ * send udp packet to given sockaddr
  */
 net_err_t udp_sendto(struct sock_t * s, const void * buf, size_t len, int flags,
                      const struct x_sockaddr * dest, x_socklen_t dest_len, ssize_t * result_len);
+
+/**
+ * recv udp packet from given sockaddr
+ */
+net_err_t udp_recvfrom(struct sock_t * s, void * buf, size_t len, int flags,
+                       const struct x_sockaddr * src, x_socklen_t * src_len, ssize_t * result_len);
 
 #endif //NET_UDP_H

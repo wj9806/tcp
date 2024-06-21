@@ -287,8 +287,8 @@ int main()
 
     ping_t ping;
     ping_run(&ping, "localhost", 1, 64, 1000);
-    ping_run(&ping, "10.0.3.2", 1, 64, 1000);
-    ping_run(&ping, "192.168.74.3", 1, 64, 1000);
+    //ping_run(&ping, "10.0.3.2", 1, 64, 1000);
+    //ping_run(&ping, "192.168.74.3", 1, 64, 1000);
     ping_run(&ping, "8.8.8.8", 1, 64, 1000);
     ping_run(&ping, "baidu.com", 1, 64, 1000);
     //ping_run(&ping, "223.5.5.5", 4, 64, 1000);
