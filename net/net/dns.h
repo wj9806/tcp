@@ -59,6 +59,16 @@ typedef struct {
     uint16_t arcount;
 } dns_hdr_t;
 
+//answer packet
+typedef struct {
+    uint16_t type;
+    uint16_t class;
+    uint32_t ttl;
+    uint16_t rd_len;
+    uint16_t rdata[1];
+} dns_afield_t;
+
+//query packet
 typedef struct {
     uint16_t type;
     uint16_t class;
