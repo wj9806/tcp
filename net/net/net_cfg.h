@@ -24,7 +24,7 @@
 #define DEBUG_RAW               DEBUG_LEVEL_ERROR
 #define DEBUG_UDP               DEBUG_LEVEL_ERROR
 #define DEBUG_TCP               DEBUG_LEVEL_INFO
-#define DEBUG_DNS               DEBUG_LEVEL_INFO
+#define DEBUG_DNS               DEBUG_LEVEL_ERROR
 
 
 #define EXMSG_MSG_CNT           10
@@ -70,6 +70,8 @@
 #define TCP_KEEPALIVE_TIME      (20 * 60 * 60)
 #define TCP_KEEPALIVE_INTVL     5
 #define TCP_KEEPALIVE_PROBES    10
+#define TCP_INIT_RTO            1000
+#define TCP_INIT_RETRIES        5
 
 #define NET_CLOSE_MAX_TMO       5000
 #define TCP_TMO_MSL             5000

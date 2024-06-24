@@ -568,6 +568,10 @@ static tcp_t * tcp_alloc(int wait, int family, int protocol)
     tcp->conn.keep_intvl = TCP_KEEPALIVE_INTVL;
     tcp->conn.keep_cnt = TCP_KEEPALIVE_PROBES;
 
+    tcp->snd.ostate = TCP_OSTATE_IDLE;
+    tcp->snd.rto = TCP_INIT_RTO;
+    tcp->snd.rexmit_max = TCP_INIT_RETRIES;
+
     if(sock_wait_init(&tcp->conn.wait))
     {
         debug_error(DEBUG_TCP, "create conn.wait failed.");

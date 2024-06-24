@@ -20,7 +20,7 @@ static dns_req_t dns_req_tbl[DNS_REQ_SIZE];
 static udp_t * dns_udp;
 static uint16_t id;
 
-static int cache_enable = 0;
+static int cache_enable = 1;
 
 static net_err_t dns_send_query(dns_req_t *req);
 

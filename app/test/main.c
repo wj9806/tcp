@@ -277,7 +277,7 @@ int main()
 
     //udp_echo_client_start(friend0_ip, 1000);
     //udp_echo_server_start(2000);
-    //tcp_echo_client_start(friend0_ip, 2000);
+    tcp_echo_client_start(friend0_ip, 2000);
 
     //tcp_echo_server_start(2000);
     //download_test("hello.txt", 2000);
@@ -289,9 +289,9 @@ int main()
     ping_run(&ping, "localhost", 1, 64, 1000);
     //ping_run(&ping, "10.0.3.2", 1, 64, 1000);
     //ping_run(&ping, "192.168.74.3", 1, 64, 1000);
-    ping_run(&ping, "8.8.8.8", 1, 64, 1000);
-    plat_printf("ping baidu.com \n");
-    ping_run(&ping, "baidu.com", 1, 64, 1000);
+    //ping_run(&ping, "8.8.8.8", 1, 64, 1000);
+    //plat_printf("ping baidu.com \n");
+    //ping_run(&ping, "baidu.com", 1, 64, 1000);
 
     char cmd[32], param[32];
     for(;;)

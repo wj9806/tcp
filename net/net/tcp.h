@@ -102,8 +102,17 @@ typedef enum {
     TCP_STATE_TIME_WAIT,
     TCP_STATE_CLOSE_WAIT,
     TCP_STATE_LAST_ACK,
+
     TCP_STATE_MAX
 } tcp_state_t;
+
+typedef enum {
+    TCP_OSTATE_IDLE,
+    TCP_OSTATE_SENDING,
+    TCP_OSTATE_REXMIT,
+
+    TCP_OSTATE_MAX
+} tcp_ostate_t;
 
 typedef struct tcp_t {
     sock_t base;
@@ -144,6 +153,16 @@ typedef struct tcp_t {
         //initial sequence
         uint32_t iss;
         sock_wait_t wait;
+
+        tcp_ostate_t ostate;
+        //retry timer
+        net_timer_t timer;
+        //retry tmo
+        int rto;
+        //max retry count
+        int rexmit_max;
+        //current retry count
+        int rexmit_cnt;
     } snd;
 
     struct {

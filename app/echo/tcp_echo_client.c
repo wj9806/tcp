@@ -34,14 +34,14 @@ int tcp_echo_client_start (const char * ip, int port)
         plat_printf("connect success\n");
     }
 
-#if 0
+#if 1
     char sbuf[128];
     //fgets(sbuf, sizeof(sbuf), stdin);
     close(s);
     return 0;
 #endif
 
-#if 1
+#if 0
     char sbuf[TCP_SBUF_SIZE];
     for (int i = 0; i < sizeof(sbuf); ++i) {
         sbuf[i] = 'a' + i %26;
