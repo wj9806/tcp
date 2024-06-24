@@ -7,6 +7,12 @@
 
 #include "tcp.h"
 
+typedef enum {
+    TCP_OEVENT_SEND,
+    TCP_OEVENT_XMIT,
+    TCP_OEVENT_TMO,
+} tcp_oevent_t;
+
 /** send tcp reset packet */
 net_err_t tcp_send_reset(tcp_seg_t * seg);
 
@@ -33,5 +39,11 @@ int tcp_write_sndbuf(tcp_t* tcp, const uint8_t* buf, int len);
 
 /** transmit tcp data packet*/
 net_err_t tcp_transmit(tcp_t * tcp);
+
+/** get tcp_ostate_name */
+const char * tcp_ostate_name(tcp_t * tcp);
+
+/** output event */
+void tcp_out_event(tcp_t * tcp, tcp_oevent_t event);
 
 #endif //NET_TCP_OUT_H

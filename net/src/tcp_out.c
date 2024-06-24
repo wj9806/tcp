@@ -181,7 +181,8 @@ net_err_t tcp_transmit(tcp_t * tcp)
 net_err_t tcp_send_syn(tcp_t * tcp)
 {
     tcp->flags.syn_out = 1;
-    tcp_transmit(tcp);
+    //tcp_transmit(tcp);
+    tcp_out_event(tcp, TCP_OEVENT_SEND);
     return NET_ERR_OK;
 }
 
@@ -245,7 +246,8 @@ net_err_t tcp_send_ack(tcp_t * tcp, tcp_seg_t * seg)
 net_err_t tcp_send_fin(tcp_t * tcp)
 {
     tcp->flags.fin_out = 1;
-    return tcp_transmit(tcp);
+    tcp_out_event(tcp, TCP_OEVENT_SEND);
+    return NET_ERR_OK;
 }
 
 int tcp_write_sndbuf(tcp_t* tcp, const uint8_t* buf, int len)
@@ -308,4 +310,138 @@ net_err_t tcp_send_keepalive(tcp_t * tcp)
     tcp_set_hdr_size(out, sizeof(tcp_hdr_t));
 
     return send_out(out, buf, &tcp->base.remote_ip, &tcp->base.local_ip);
+}
+
+const char * tcp_ostate_name(tcp_t * tcp)
+{
+    static const char * state_name[] = {
+            [TCP_OSTATE_IDLE] = "idle",
+            [TCP_OSTATE_SENDING] = "sending",
+            [TCP_OSTATE_REXMIT] = "resending",
+
+            [TCP_OSTATE_MAX] = "unknown"
+    };
+    tcp_ostate_t state = tcp->snd.ostate;
+    if (state > TCP_OSTATE_MAX)
+    {
+        state = TCP_OSTATE_MAX;
+    }
+    return state_name[state];
+}
+
+static void tcp_out_timer_tmo(struct net_timer_t * timer, void * arg)
+{
+    tcp_t * tcp = (tcp_t *)arg;
+    switch (tcp->snd.ostate) {
+        case TCP_OSTATE_SENDING:
+        {
+            debug_warn(DEBUG_TCP, "tcp rexmit");
+            net_err_t err = 0;
+            if (err < 0)
+            {
+                debug_error(DEBUG_TCP, "rexmit failed");
+                return;
+            }
+            tcp->snd.rexmit_cnt = 1;
+            tcp->snd.rto *= 2;
+            tcp->snd.ostate = TCP_OSTATE_REXMIT;
+            net_timer_add(&tcp->snd.timer, tcp_ostate_name(tcp), tcp_out_timer_tmo, tcp, tcp->snd.rto, 0);
+            break;
+        }
+        case TCP_OSTATE_REXMIT:
+        {
+            if (++tcp->snd.rexmit_cnt > tcp->snd.rexmit_max)
+            {
+                debug_error(DEBUG_TCP, "rexmit failed");
+                tcp_abort(tcp, NET_ERR_TMO);
+                return;
+            }
+            debug_warn(DEBUG_TCP, "tcp rexmit");
+            net_err_t err = 0;
+            if (err < 0)
+            {
+                debug_error(DEBUG_TCP, "rexmit failed");
+                return;
+            }
+            tcp->snd.rto *= 2;
+            if(tcp->snd.rto >= TCP_RTO_MAX)
+            {
+                tcp->snd.rto = TCP_RTO_MAX;
+            }
+            tcp->snd.ostate = TCP_OSTATE_REXMIT;
+            net_timer_add(&tcp->snd.timer, tcp_ostate_name(tcp), tcp_out_timer_tmo, tcp, tcp->snd.rto, 0);
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+void tcp_set_ostate(tcp_t * tcp, tcp_ostate_t state)
+{
+    if (state >= TCP_OSTATE_MAX)
+    {
+        return;
+    }
+
+    switch (state) {
+        case TCP_OSTATE_IDLE:
+            tcp->snd.ostate = TCP_OSTATE_IDLE;
+            net_timer_remove(&tcp->snd.timer);
+            break;
+        case TCP_OSTATE_SENDING:
+            tcp->snd.ostate = TCP_OSTATE_SENDING;
+            net_timer_remove(&tcp->snd.timer);
+            net_timer_add(&tcp->snd.timer, tcp_ostate_name(tcp), tcp_out_timer_tmo, tcp, tcp->snd.rto, 0);
+            break;
+        case TCP_OSTATE_REXMIT:
+            tcp->snd.ostate = TCP_OSTATE_REXMIT;
+            net_timer_remove(&tcp->snd.timer);
+            net_timer_add(&tcp->snd.timer, tcp_ostate_name(tcp), tcp_out_timer_tmo, tcp, tcp->snd.rto, 0);
+            break;
+        default:
+            break;
+    }
+}
+
+static void tcp_ostate_idle_in(tcp_t * tcp, tcp_oevent_t event)
+{
+    switch (event) {
+        case TCP_OEVENT_SEND:
+            tcp_transmit(tcp);
+            tcp_set_ostate(tcp, TCP_OSTATE_SENDING);
+            break;
+
+        default:
+            break;
+    }
+}
+
+static void tcp_ostate_sending_in(tcp_t * tcp, tcp_oevent_t event)
+{
+
+}
+
+static void tcp_ostate_resending_in(tcp_t * tcp, tcp_oevent_t event) {
+
+
+}
+
+typedef void (*state_func_t) (tcp_t * t, tcp_oevent_t event);
+
+void tcp_out_event(tcp_t * tcp, tcp_oevent_t event)
+{
+    static state_func_t state_func[] = {
+            [TCP_OSTATE_IDLE] = tcp_ostate_idle_in,
+            [TCP_OSTATE_SENDING] = tcp_ostate_sending_in,
+            [TCP_OSTATE_REXMIT] = tcp_ostate_resending_in
+    };
+
+    if (tcp->snd.ostate >= TCP_OSTATE_MAX)
+    {
+        debug_error(DEBUG_TCP, "tcp state error: %s\n", tcp_ostate_name(tcp));
+        return;
+    }
+
+    state_func[tcp->snd.ostate](tcp, event);
 }
