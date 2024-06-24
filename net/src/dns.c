@@ -9,8 +9,10 @@
 #include "tools.h"
 #include "net_api.h"
 #include "socket.h"
+#include "timer.h"
 
 static dns_entry_t dns_entry_tbl[DNS_ENTRY_SIZE];
+static net_timer_t entry_update_timer;
 
 static list_t req_list;
 static mblock_t req_block;
@@ -33,6 +35,7 @@ static void show_req_list (void) {
 
 static void show_entry_list(void)
 {
+    plat_printf("cache list----------\n");
     for (int i = 0; i < DNS_ENTRY_SIZE; ++i) {
         dns_entry_t * entry = dns_entry_tbl + i;
 
@@ -41,14 +44,38 @@ static void show_entry_list(void)
             continue;
         }
 
-        plat_printf("%s ttl(%d)", entry->domain_name, entry->ttl);
+        plat_printf("%s ttl(%d)  ", entry->domain_name, entry->ttl);
         debug_dump_ip("ip:", &entry->ipaddr);
+        plat_printf("\n");
     }
 }
 #else
 #define show_req_list()
 #define show_entry_list()
 #endif
+
+static void dns_entry_free(dns_entry_t * entry)
+{
+    ipaddr_set_any(&entry->ipaddr);
+}
+
+static void dns_update_tmo(struct net_timer_t * timer, void * arg)
+{
+    for (int i = 0; i < DNS_ENTRY_SIZE; ++i) {
+        dns_entry_t * entry = dns_entry_tbl + i;
+        if (ipaddr_is_any(&entry->ipaddr))
+        {
+            continue;
+        }
+
+        if(!entry->ttl || (--entry->ttl == 0))
+        {
+            dns_entry_free(entry);
+            show_entry_list();
+        }
+
+    }
+}
 
 void dns_init(void)
 {
@@ -57,6 +84,8 @@ void dns_init(void)
 
     list_init(&req_list);
     mblock_init(&req_block, dns_req_tbl, sizeof(dns_req_t), DNS_REQ_SIZE, LOCKER_THREAD);
+
+    net_timer_add(&entry_update_timer, "dns-refresher", dns_update_tmo, (void *)0, DNS_UPDATE_PERIOD * 1000, NET_TIMER_RELOAD);
 
     dns_udp = (udp_t *) udp_create(AF_INET, IPPROTO_UDP);
     assert(dns_udp != (udp_t *)0, "dns_udp create failed")
@@ -85,11 +114,6 @@ static void dns_entry_init(dns_entry_t * entry, const char * domain_name, int tt
     entry->domain_name[DNS_DOMAIN_MAX - 1] = '\0';
 }
 
-static void dns_entry_free(dns_entry_t * entry)
-{
-    ipaddr_set_any(&entry->ipaddr);
-}
-
 static void dns_entry_insert(const char * domain_name, uint32_t ttl, ipaddr_t * ipaddr)
 {
     dns_entry_t * next = (dns_entry_t *) 0;
@@ -111,6 +135,7 @@ static void dns_entry_insert(const char * domain_name, uint32_t ttl, ipaddr_t * 
 
     next = next ? next : oldest;
     dns_entry_init(next, domain_name, ttl, ipaddr);
+    show_entry_list();
 }
 
 static dns_entry_t * dns_entry_find(const char * domain_name)

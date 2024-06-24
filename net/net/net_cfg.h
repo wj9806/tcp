@@ -80,5 +80,6 @@
 #define DNS_REQ_TMO             5000
 
 #define DNS_ENTRY_SIZE          10
+#define DNS_UPDATE_PERIOD       1
 
 #endif //NET_NET_CFG_H
