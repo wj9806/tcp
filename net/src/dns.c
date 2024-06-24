@@ -20,6 +20,12 @@ static dns_req_t dns_req_tbl[DNS_REQ_SIZE];
 static udp_t * dns_udp;
 static uint16_t id;
 
+static int cache_enable = 0;
+
+static net_err_t dns_send_query(dns_req_t *req);
+
+static void dns_req_fail(dns_req_t* req, net_err_t err);
+
 static char working_buf[DNS_WORKING_BUF_SIZE];
 
 #if DEBUG_DISP_ENABLED(DEBUG_DNS)
@@ -71,9 +77,28 @@ static void dns_update_tmo(struct net_timer_t * timer, void * arg)
         if(!entry->ttl || (--entry->ttl == 0))
         {
             dns_entry_free(entry);
-            show_entry_list();
+            //show_entry_list();
         }
+    }
 
+    node_t * curr, * next;
+    for (curr = list_first(&req_list); curr; curr = next) {
+        next = list_node_next(curr);
+
+        dns_req_t * req = list_node_parent(curr, dns_req_t, node);
+
+        if (--req->retry_tmo == 0)
+        {
+            if (--req->retry_cnt == 0)
+            {
+                dns_req_fail(req, NET_ERR_TMO);
+            }
+            else
+            {
+                req->retry_tmo = DNS_QUERY_RETRY_TMO;
+                dns_send_query(req);
+            }
+        }
     }
 }
 
@@ -155,6 +180,8 @@ static dns_entry_t * dns_entry_find(const char * domain_name)
 
 static void dns_req_add(dns_req_t * req)
 {
+    req->retry_tmo = DNS_QUERY_RETRY_TMO;
+    req->retry_cnt = DNS_QUERY_RETRY_CNT;
     req->query_id = ++id;
     req->err = NET_ERR_OK;
     ipaddr_set_any(&req->ipaddr);
@@ -200,7 +227,7 @@ static uint8_t * ip_add_query_find(char * domain_name, uint8_t * buf, size_t siz
     dns_qfield_t * f = (dns_qfield_t*)c;
     f->class = x_htons(DNS_QUERY_CLASS_INET);
     f->type = x_htons(DNS_QUERY_TYPE_A);
-
+    plat_printf("%s\n", domain_name);
     return (uint8_t*) f + sizeof(dns_qfield_t);
 }
 
@@ -255,12 +282,15 @@ net_err_t dns_req_in(func_msg_t * msg)
         return NET_ERR_OK;
     }
 
-    dns_entry_t * dns_entry = dns_entry_find(dns_req->domain_name);
-    if (dns_entry)
+    if (cache_enable)
     {
-        ipaddr_copy(&dns_req->ipaddr, &dns_entry->ipaddr);
-        dns_req->err = NET_ERR_OK;
-        return NET_ERR_OK;
+        dns_entry_t * dns_entry = dns_entry_find(dns_req->domain_name);
+        if (dns_entry)
+        {
+            ipaddr_copy(&dns_req->ipaddr, &dns_entry->ipaddr);
+            dns_req->err = NET_ERR_OK;
+            return NET_ERR_OK;
+        }
     }
 
     dns_req->wait_sem = sys_sem_create(0);

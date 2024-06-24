@@ -88,6 +88,8 @@ typedef struct {
     sys_sem_t wait_sem;
 
     int query_id;
+    uint8_t retry_tmo;
+    uint8_t retry_cnt;
     node_t node;
 } dns_req_t;
 
