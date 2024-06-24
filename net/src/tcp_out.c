@@ -152,6 +152,7 @@ net_err_t tcp_transmit(tcp_t * tcp)
     }
 
     tcp_hdr_t * hdr = (tcp_hdr_t *) pktbuf_data(buf);
+    plat_memset(hdr, 0, sizeof(tcp_hdr_t));
     hdr->sport = tcp->base.local_port;
     hdr->dport = tcp->base.remote_port;
     hdr->seq = tcp->snd.nxt;
@@ -329,6 +330,51 @@ const char * tcp_ostate_name(tcp_t * tcp)
     return state_name[state];
 }
 
+net_err_t tcp_retransmit(tcp_t * tcp)
+{
+    int seq_len = 0;
+    if (tcp->flags.syn_out)
+    {
+        seq_len++;
+    }
+    if (tcp->flags.fin_out)
+    {
+        seq_len++;
+    }
+    if (seq_len == 0)
+    {
+        return NET_ERR_OK;
+    }
+
+    pktbuf_t * buf = pktbuf_alloc(sizeof(tcp_hdr_t));
+    if (!buf)
+    {
+        debug_error(DEBUG_TCP, "no buffer");
+        return NET_ERR_OK;
+    }
+
+    tcp_hdr_t * hdr = (tcp_hdr_t *) pktbuf_data(buf);
+    plat_memset(hdr, 0, sizeof(tcp_hdr_t));
+    hdr->sport = tcp->base.local_port;
+    hdr->dport = tcp->base.remote_port;
+    hdr->seq = tcp->snd.una;
+    hdr->ack = tcp->rcv.nxt;
+    hdr->flag = 0;
+    hdr->f_syn = tcp->flags.syn_out;
+    if (hdr->f_syn)
+    {
+        //write mss option
+        write_sync_option(tcp, buf);
+    }
+    hdr->f_ack = tcp->flags.irs_valid;
+    hdr->f_fin = (tcp_buf_cnt(&tcp->snd.buf) == 0) ? tcp->flags.fin_out : 0;
+    hdr->win = tcp_rcv_window(tcp);
+    hdr->urg_ptr = 0;
+
+    tcp_set_hdr_size(hdr, buf->total_size);
+    return send_out(hdr, buf, &tcp->base.remote_ip, &tcp->base.local_ip);
+}
+
 static void tcp_out_timer_tmo(struct net_timer_t * timer, void * arg)
 {
     tcp_t * tcp = (tcp_t *)arg;
@@ -336,7 +382,7 @@ static void tcp_out_timer_tmo(struct net_timer_t * timer, void * arg)
         case TCP_OSTATE_SENDING:
         {
             debug_warn(DEBUG_TCP, "tcp rexmit");
-            net_err_t err = 0;
+            net_err_t err = tcp_retransmit(tcp);
             if (err < 0)
             {
                 debug_error(DEBUG_TCP, "rexmit failed");
@@ -357,7 +403,7 @@ static void tcp_out_timer_tmo(struct net_timer_t * timer, void * arg)
                 return;
             }
             debug_warn(DEBUG_TCP, "tcp rexmit");
-            net_err_t err = 0;
+            net_err_t err = tcp_retransmit(tcp);
             if (err < 0)
             {
                 debug_error(DEBUG_TCP, "rexmit failed");
@@ -419,11 +465,32 @@ static void tcp_ostate_idle_in(tcp_t * tcp, tcp_oevent_t event)
 
 static void tcp_ostate_sending_in(tcp_t * tcp, tcp_oevent_t event)
 {
+    switch (event) {
+        case TCP_OEVENT_SEND:
+            if (tcp->snd.una == tcp->snd.nxt)
+            {
+                tcp_set_ostate(tcp, TCP_OSTATE_IDLE);
+            }
+            break;
 
+        default:
+            break;
+    }
 }
 
-static void tcp_ostate_resending_in(tcp_t * tcp, tcp_oevent_t event) {
+static void tcp_ostate_resending_in(tcp_t * tcp, tcp_oevent_t event)
+{
+    switch (event) {
+        case TCP_OEVENT_SEND:
+            if (tcp->snd.una == tcp->snd.nxt)
+            {
+                tcp_set_ostate(tcp, TCP_OSTATE_IDLE);
+            }
+            break;
 
+        default:
+            break;
+    }
 
 }
 

@@ -769,6 +769,7 @@ void tcp_keepalive_restart(tcp_t * tcp)
 
 void tcp_kill_all_timers(tcp_t * tcp)
 {
+    net_timer_remove(&tcp->snd.timer);
     net_timer_remove(&tcp->conn.keep_timer);
 }
 

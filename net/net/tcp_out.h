@@ -46,4 +46,7 @@ const char * tcp_ostate_name(tcp_t * tcp);
 /** output event */
 void tcp_out_event(tcp_t * tcp, tcp_oevent_t event);
 
+/** set tcp ostate */
+void tcp_set_ostate(tcp_t * tcp, tcp_ostate_t state);
+
 #endif //NET_TCP_OUT_H
