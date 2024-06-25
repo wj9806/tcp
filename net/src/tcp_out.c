@@ -71,10 +71,18 @@ net_err_t tcp_send_reset(tcp_seg_t * seg)
  * |_________|____________|______________|
  *          UNA            NXT
  */
-static void get_send_info(tcp_t * tcp, int * doff, int * dlen)
+static void get_send_info(tcp_t * tcp, int rexmit, int * doff, int * dlen)
 {
-    *doff = (int) (tcp->snd.nxt - tcp->snd.una);
-    *dlen = tcp_buf_cnt(&tcp->snd.buf) - *doff;
+    if (rexmit)
+    {
+        *doff = 0;
+        *dlen = tcp_buf_cnt(&tcp->snd.buf);
+    }
+    else
+    {
+        *doff = (int) (tcp->snd.nxt - tcp->snd.una);
+        *dlen = tcp_buf_cnt(&tcp->snd.buf) - *doff;
+    }
     *dlen = (*dlen > tcp->mss) ? tcp->mss : *dlen;
 }
 
@@ -124,7 +132,7 @@ static void write_sync_option(tcp_t * tcp, pktbuf_t * buf)
 net_err_t tcp_transmit(tcp_t * tcp)
 {
     int dlen, doff;
-    get_send_info(tcp, &doff, &dlen);
+    get_send_info(tcp, 0, &doff, &dlen);
     if (dlen < 0)
     {
         return NET_ERR_OK;
@@ -332,7 +340,14 @@ const char * tcp_ostate_name(tcp_t * tcp)
 
 net_err_t tcp_retransmit(tcp_t * tcp)
 {
-    int seq_len = 0;
+    int dlen, doff;
+    get_send_info(tcp, 1, &doff, &dlen);
+
+    if (dlen < 0) {
+        return NET_ERR_OK;
+    }
+
+    int seq_len = dlen;
     if (tcp->flags.syn_out)
     {
         seq_len++;
@@ -372,6 +387,9 @@ net_err_t tcp_retransmit(tcp_t * tcp)
     hdr->urg_ptr = 0;
 
     tcp_set_hdr_size(hdr, buf->total_size);
+
+    copy_send_data(tcp, buf, doff, dlen);
+    tcp->snd.nxt = hdr->f_syn + hdr->f_fin + tcp->snd.una + dlen;
     return send_out(hdr, buf, &tcp->base.remote_ip, &tcp->base.local_ip);
 }
 
@@ -414,7 +432,6 @@ static void tcp_out_timer_tmo(struct net_timer_t * timer, void * arg)
             {
                 tcp->snd.rto = TCP_RTO_MAX;
             }
-            tcp->snd.ostate = TCP_OSTATE_REXMIT;
             net_timer_add(&tcp->snd.timer, tcp_ostate_name(tcp), tcp_out_timer_tmo, tcp, tcp->snd.rto, 0);
             break;
         }
@@ -432,6 +449,8 @@ void tcp_set_ostate(tcp_t * tcp, tcp_ostate_t state)
 
     switch (state) {
         case TCP_OSTATE_IDLE:
+            plat_printf("TCP_OSTATE_IDLE===================================\n");
+            tcp->snd.rto = TCP_INIT_RTO;
             tcp->snd.ostate = TCP_OSTATE_IDLE;
             net_timer_remove(&tcp->snd.timer);
             break;
@@ -467,9 +486,19 @@ static void tcp_ostate_sending_in(tcp_t * tcp, tcp_oevent_t event)
 {
     switch (event) {
         case TCP_OEVENT_SEND:
-            if (tcp->snd.una == tcp->snd.nxt)
+            if ((tcp->snd.una == tcp->snd.nxt) || tcp->flags.fin_out)
             {
-                tcp_set_ostate(tcp, TCP_OSTATE_IDLE);
+                if (tcp_buf_cnt(&tcp->snd.buf) || tcp->flags.fin_in)
+                {
+                    debug_info(DEBUG_TCP, "tcp_buf_cnt-----------1");
+                    tcp_transmit(tcp);
+                    tcp_set_ostate(tcp, TCP_OSTATE_SENDING);
+                }
+                else
+                {
+                    debug_info(DEBUG_TCP, "tcp_buf_cnt-----------4");
+                    tcp_set_ostate(tcp, TCP_OSTATE_IDLE);
+                }
             }
             break;
 
@@ -482,9 +511,25 @@ static void tcp_ostate_resending_in(tcp_t * tcp, tcp_oevent_t event)
 {
     switch (event) {
         case TCP_OEVENT_SEND:
-            if (tcp->snd.una == tcp->snd.nxt)
+            if ((tcp->snd.una == tcp->snd.nxt) || tcp->flags.fin_out)
             {
-                tcp_set_ostate(tcp, TCP_OSTATE_IDLE);
+                if (tcp_buf_cnt(&tcp->snd.buf) || tcp->flags.fin_in)
+                {
+                    debug_info(DEBUG_TCP, "tcp_buf_cnt-----------2");
+                    tcp_transmit(tcp);
+                    tcp_set_ostate(tcp, TCP_OSTATE_SENDING);
+                }
+                else
+                {
+                    debug_info(DEBUG_TCP, "tcp_buf_cnt-----------4");
+                    tcp_set_ostate(tcp, TCP_OSTATE_IDLE);
+                }
+            }
+            else
+            {
+                debug_info(DEBUG_TCP, "tcp_buf_cnt-----------3");
+                tcp_set_ostate(tcp, TCP_OSTATE_REXMIT);
+                tcp_retransmit(tcp);
             }
             break;
 

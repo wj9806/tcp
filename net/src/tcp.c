@@ -295,7 +295,7 @@ static net_err_t tcp_send(struct sock_t * s, const void * buf, size_t len, int f
     else
     {
         *result_len = size;
-        tcp_transmit(tcp);
+        tcp_out_event(tcp, TCP_OEVENT_SEND);
         return NET_ERR_OK;
     }
 }
@@ -527,7 +527,7 @@ static void tcp_destroy(struct sock_t * s)
     {
         return;
     }
-
+    tcp_kill_all_timers(tcp);
     tcp_free(tcp);
 }
 
