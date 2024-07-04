@@ -48,7 +48,7 @@ void udp_echo_server (void * arg) {
     }
     end:
     if (s >= 0) {
-        closesocket(s);
+        close(s);
     }
 }
 

@@ -11,8 +11,11 @@
 
 #undef  sockaddr_in
 #define sockaddr_in x_sockaddr_in
+#undef sockaddr
 #define sockaddr    x_sockaddr
+#undef socklen_t
 #define socklen_t   x_socklen_t
+#undef timeval
 #define timeval     x_timeval
 
 #define socket(family, type, protocol)                      x_socket(family, type, protocol)
